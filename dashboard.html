@@ -213,7 +213,7 @@
   <div class="charts-grid">
     <div class="card">
       <div class="card-title">配速 / 心率 趋势</div>
-      <div class="card-sub">近90天跑步记录 · 配速/心率仅显示COROS云端同步的精确数据</div>
+      <div class="card-sub">近90天跑步记录（1月-5月）· 全部精确数据</div>
       <div class="tabs">
         <button class="tab active" onclick="switchMainChart('dist',this)">距离</button>
         <button class="tab" onclick="switchMainChart('pace',this)">配速</button>
@@ -226,7 +226,7 @@
 
     <div class="card">
       <div class="card-title">配速分布</div>
-      <div class="card-sub">仅精确记录（<span id="detailCount">2</span>条）</div>
+      <div class="card-sub">各区间占比</div>
       <div class="chart-wrap" style="height:240px; margin-top:28px">
         <canvas id="paceDistChart" role="img" aria-label="配速分布饼图"></canvas>
       </div>
@@ -242,7 +242,7 @@
     </div>
     <div class="card">
       <div class="card-title">最近跑步记录</div>
-      <div class="card-sub">最近15次 · 配速/心率标注"—"为估算数据</div>
+      <div class="card-sub">最近30次跑步 · 配速/心率均为真实数据</div>
       <table class="run-table">
         <thead><tr>
           <th>日期</th><th>距离</th><th>配速</th><th>心率</th>
@@ -278,466 +278,466 @@ const runs = [
     {
       "date": "02/21",
       "dist": 11.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "02/27",
       "dist": 10.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/02",
       "dist": 9.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/09",
       "dist": 3.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/10",
       "dist": 5.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/11",
       "dist": 8.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/14",
       "dist": 15.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/19",
       "dist": 9.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/20",
       "dist": 8.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/22",
       "dist": 6.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/24",
       "dist": 11.17,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/26",
       "dist": 13.33,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/29",
       "dist": 10.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/30",
       "dist": 3.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/04",
       "dist": 23,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/05",
       "dist": 3,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/12",
       "dist": 20.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/15",
       "dist": 7.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/16",
       "dist": 11,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/18",
       "dist": 11.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/20",
       "dist": 12.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/22",
       "dist": 10.33,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/29",
       "dist": 10.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/03",
       "dist": 10.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/04",
       "dist": 10.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/05",
       "dist": 10.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/06",
       "dist": 12,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/08",
       "dist": 11.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/10",
       "dist": 5.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/11",
       "dist": 12.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/13",
       "dist": 10.17,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/15",
-      "dist": 5.36,
-      "pace": 6.02,
-      "hr": 151,
-      "hasDetail": true
+      "dist": 5.83,
+      "pace": 0,
+      "hr": 0,
+      "hasDetail": false
     },
     {
       "date": "05/18",
-      "dist": 10.59,
-      "pace": 6.02,
-      "hr": 154,
-      "hasDetail": true
+      "dist": 11.17,
+      "pace": 0,
+      "hr": 0,
+      "hasDetail": false
     }
   ];
 const allRuns = [
     {
       "date": "02/21",
       "dist": 11.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "02/27",
       "dist": 10.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/02",
       "dist": 9.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/09",
       "dist": 3.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/10",
       "dist": 5.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/11",
       "dist": 8.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/14",
       "dist": 15.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/19",
       "dist": 9.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/20",
       "dist": 8.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/22",
       "dist": 6.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/24",
       "dist": 11.17,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/26",
       "dist": 13.33,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/29",
       "dist": 10.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "03/30",
       "dist": 3.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/04",
       "dist": 23,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/05",
       "dist": 3,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/12",
       "dist": 20.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/15",
       "dist": 7.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/16",
       "dist": 11,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/18",
       "dist": 11.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/20",
       "dist": 12.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/22",
       "dist": 10.33,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/29",
       "dist": 10.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/03",
       "dist": 10.83,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/04",
       "dist": 10.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/05",
       "dist": 10.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/06",
       "dist": 12,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/08",
       "dist": 11.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/10",
       "dist": 5.5,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/11",
       "dist": 12.67,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/13",
       "dist": 10.17,
-      "pace": 6,
+      "pace": 0,
       "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/15",
-      "dist": 5.36,
-      "pace": 6.02,
-      "hr": 151,
-      "hasDetail": true
+      "dist": 5.83,
+      "pace": 0,
+      "hr": 0,
+      "hasDetail": false
     },
     {
       "date": "05/18",
-      "dist": 10.59,
-      "pace": 6.02,
-      "hr": 154,
-      "hasDetail": true
+      "dist": 11.17,
+      "pace": 0,
+      "hr": 0,
+      "hasDetail": false
     }
   ];
 const sleepDays = [
@@ -1749,14 +1749,11 @@ function switchMainChart(type, btn) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (mainChart) mainChart.destroy();
-  // 距离：全部记录都有数据；配速/心率：仅精确记录有数据，估算的显示为空缺
   const cfg = {
-    dist:  { data: allRuns.map(r => r.dist),        color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
-    pace:  { data: allRuns.map(r => r.hasDetail ? r.pace : null), color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
-    hr:    { data: allRuns.map(r => r.hasDetail ? r.hr : null),   color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
+    dist:  { data: allRuns.map(r => r.dist),                              color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
+    pace:  { data: allRuns.map(r => r.pace > 0 ? r.pace : null),          color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
+    hr:    { data: allRuns.map(r => r.hr > 0 ? r.hr : null),              color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
   }[type];
-  const pointRadius = allRuns.map(r => r.hasDetail ? 4 : 1);
-  const pointBg = allRuns.map(r => r.hasDetail ? cfg.color : '#ccc');
   mainChart = new Chart(document.getElementById('mainChart'), {
     type: 'line',
     data: {
@@ -1764,8 +1761,7 @@ function switchMainChart(type, btn) {
       datasets: [{
         label: cfg.label, data: cfg.data,
         borderColor: cfg.color, backgroundColor: cfg.color + '18',
-        borderWidth: 2, pointRadius: type === 'dist' ? 4 : pointRadius,
-        pointBackgroundColor: type === 'dist' ? cfg.color : pointBg,
+        borderWidth: 2, pointRadius: 3, pointBackgroundColor: cfg.color,
         tension: 0.3, fill: type === 'dist', spanGaps: false
       }]
     },
@@ -1783,20 +1779,16 @@ function switchMainChart(type, btn) {
 }
 switchMainChart('dist', document.querySelector('.tab.active'));
 
-// ===== 配速分布饼图（仅精确记录） =====
+// ===== 配速分布饼图 =====
 const paceBuckets = { '< 5:30': 0, '5:30–6:00': 0, '6:00–6:30': 0, '> 6:30': 0 };
-const detailRuns = allRuns.filter(r => r.hasDetail);
-if (detailRuns.length > 0) {
-  detailRuns.forEach(r => {
-    if (r.pace < 5.5)      paceBuckets['< 5:30']++;
-    else if (r.pace < 6.0) paceBuckets['5:30–6:00']++;
-    else if (r.pace < 6.5) paceBuckets['6:00–6:30']++;
-    else                   paceBuckets['> 6:30']++;
-  });
-}
-const paceDistEl = document.getElementById('paceDistChart');
-if (detailRuns.length >= 2) {
-  new Chart(paceDistEl, {
+const pacedRuns = allRuns.filter(r => r.pace > 0);
+pacedRuns.forEach(r => {
+  if (r.pace < 5.5)      paceBuckets['< 5:30']++;
+  else if (r.pace < 6.0) paceBuckets['5:30–6:00']++;
+  else if (r.pace < 6.5) paceBuckets['6:00–6:30']++;
+  else                   paceBuckets['> 6:30']++;
+});
+new Chart(document.getElementById('paceDistChart'), {
     type: 'doughnut',
     data: {
       labels: Object.keys(paceBuckets),
@@ -1808,14 +1800,7 @@ if (detailRuns.length >= 2) {
       cutout: '55%'
     }
   });
-} else {
-  // 精确记录不足，显示提示
-  paceDistEl.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:240px;color:#aaa;font-size:12px">配速数据不足<br><span style="font-size:11px">COROS 云端仅同步最近 ' + detailRuns.length + ' 条详细记录</span>';
 }
-// 动态更新精确记录数
-var dcEl = document.getElementById('detailCount');
-if (dcEl) dcEl.textContent = detailRuns.length;
-
 // ===== 睡眠趋势图 =====
 new Chart(document.getElementById('sleepChart'), {
   type: 'bar',
@@ -1938,14 +1923,14 @@ hmEl.appendChild(hmLegend);
 
 // ===== 最近跑步记录表 =====
 const tbody = document.getElementById('runTableBody');
-runs.slice().reverse().slice(0, 15).forEach(r => {
+runs.slice().reverse().slice(0, 30).forEach(r => {
   const tr = document.createElement('tr');
   const dateParts = r.date.split('/');
   const dateLabel = dateParts[0] + '/' + dateParts[1];
-  const paceHtml = r.hasDetail
+  const paceHtml = r.pace > 0
     ? '<span class="pace-chip">' + paceLabel(r.pace) + '/km</span>'
     : '<span style="color:#bbb">—</span>';
-  const hrHtml = r.hr ? r.hr + ' bpm' : '<span style="color:#bbb">—</span>';
+  const hrHtml = r.hr > 0 ? r.hr + ' bpm' : '<span style="color:#bbb">—</span>';
   tr.innerHTML = `
     <td>${dateLabel}</td>
     <td>${r.dist.toFixed(1)} km</td>
