@@ -1073,14 +1073,14 @@ function switchMainChart(type, btn) {
   btn.classList.add('active');
   if (mainChart) mainChart.destroy();
   const cfg = {
-    dist:  { data: allRuns.map(r => r.dist),                              color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
-    pace:  { data: allRuns.map(r => r.pace > 0 ? r.pace : null),          color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
-    hr:    { data: allRuns.map(r => r.hr > 0 ? r.hr : null),              color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
+    dist:  { data: runs.map(r => r.dist),                              color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
+    pace:  { data: runs.map(r => r.pace > 0 ? r.pace : null),          color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
+    hr:    { data: runs.map(r => r.hr > 0 ? r.hr : null),              color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
   }[type];
   mainChart = new Chart(document.getElementById('mainChart'), {
     type: 'line',
     data: {
-      labels: allRuns.map(r => r.date),
+      labels: runs.map(r => r.date),
       datasets: [{
         label: cfg.label, data: cfg.data,
         borderColor: cfg.color, backgroundColor: cfg.color + '18',
@@ -1104,7 +1104,7 @@ switchMainChart('dist', document.querySelector('.tab.active'));
 
 // ===== 配速分布饼图 =====
 const paceBuckets = { '< 5:30': 0, '5:30–6:00': 0, '6:00–6:30': 0, '> 6:30': 0 };
-const pacedRuns = allRuns.filter(r => r.pace > 0);
+const pacedRuns = runs.filter(r => r.pace > 0);
 pacedRuns.forEach(r => {
   if (r.pace < 5.5)      paceBuckets['< 5:30']++;
   else if (r.pace < 6.0) paceBuckets['5:30–6:00']++;
@@ -1175,7 +1175,7 @@ stageContainer.appendChild(legend);
 
 // ===== 训练热力图 =====
 const heatmapData = {};
-allRuns.forEach(r => {
+runs.forEach(r => {
   const key = r.date.replace('/', '-');
   heatmapData[key] = (heatmapData[key] || 0) + r.dist;
 });
