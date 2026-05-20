@@ -553,14 +553,15 @@ new Chart(document.getElementById('memoRingChart'), {
 });
 
 // ===== 2. 反应分布饼图 =====
-const respCounts = { FAMILIAR: 0, VAGUE: 0, FORGET: 0 };
-memoData.todayItems.forEach(i => respCounts[i.resp]++);
+// resp: 0=FAMILIAR(认识), 1=FORGET(忘记), 2=VAGUE(模糊)
+const rc = [0, 0, 0];
+memoData.todayItems.forEach(i => { if (i.resp >= 0 && i.resp <= 2) rc[i.resp]++; });
 new Chart(document.getElementById('respDistChart'), {
   type: 'doughnut',
   data: {
-    labels: ['认识 '+respCounts.FAMILIAR, '模糊 '+respCounts.VAGUE, '忘记 '+respCounts.FORGET],
+    labels: ['认识 ' + rc[0], '模糊 ' + rc[2], '忘记 ' + rc[1]],
     datasets: [{
-      data: [respCounts.FAMILIAR, respCounts.VAGUE, respCounts.FORGET],
+      data: [rc[0], rc[2], rc[1]],
       backgroundColor: ['#3B6D11','#A66E00','#C44032'],
       borderWidth: 0, hoverOffset: 4
     }]
@@ -575,11 +576,11 @@ new Chart(document.getElementById('respDistChart'), {
 
 // ===== 3. 需重点关注 =====
 const attGrid = document.getElementById('attentionGrid');
-const needAttn = memoData.todayItems.filter(i => i.resp === 'FORGET' || i.resp === 'VAGUE');
+const needAttn = memoData.todayItems.filter(i => i.resp === 1 || i.resp === 2);
 needAttn.forEach((item, idx) => {
   const div = document.createElement('div');
-  div.className = 'attention-item' + (item.resp === 'VAGUE' ? ' vague' : '');
-  div.innerHTML = `<div class="att-word">${item.spelling}</div><div class="att-reason">${item.resp === 'FORGET' ? '忘记了，需要加强记忆' : '印象模糊，再巩固一下'} · 第 ${item.order} 序</div>`;
+  div.className = 'attention-item' + (item.resp === 2 ? ' vague' : '');
+  div.innerHTML = `<div class="att-word">${item.spelling}</div><div class="att-reason">${item.resp === 1 ? '忘记了，需要加强记忆' : '印象模糊，再巩固一下'} · 第 ${item.order} 序</div>`;
   attGrid.appendChild(div);
 });
 
@@ -654,9 +655,9 @@ function renderWordTable(filter) {
   tbody.innerHTML = '';
   let items = [...memoData.todayItems];
   if (filter === 'new')      items = items.filter(i => i.isNew);
-  else if (filter === 'forget') items = items.filter(i => i.resp === 'FORGET');
-  else if (filter === 'vague')  items = items.filter(i => i.resp === 'VAGUE');
-  else if (filter === 'familiar') items = items.filter(i => i.resp === 'FAMILIAR');
+  else if (filter === 'forget') items = items.filter(i => i.resp === 1);
+  else if (filter === 'vague')  items = items.filter(i => i.resp === 2);
+  else if (filter === 'familiar') items = items.filter(i => i.resp === 0);
 
   if (sortCol >= 0) {
     items.sort((a,b) => {
@@ -675,11 +676,11 @@ function renderWordTable(filter) {
   items.forEach((item, idx) => {
     const tr = document.createElement('tr');
     tr.style.display = '';
-    const tagCls = item.resp === 'FORGET' ? 'tag-forget'
-                  : item.resp === 'VAGUE' ? 'tag-vague'
+    const tagCls = item.resp === 1 ? 'tag-forget'
+                  : item.resp === 2 ? 'tag-vague'
                   : item.isNew ? 'tag-new' : 'tag-familiar';
-    const tagTxt = item.resp === 'FORGET' ? '忘记'
-                : item.resp === 'VAGUE' ? '模糊'
+    const tagTxt = item.resp === 1 ? '忘记'
+                : item.resp === 2 ? '模糊'
                 : item.isNew ? '新词' : '认识';
     tr.innerHTML = `
       <td>${idx + 1}</td>
