@@ -285,158 +285,188 @@ const memoData = {
 const studyRecords = [
   {
     "count": 17,
-    "lastResp": "2026-02-11",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-11",
     "tags": []
   },
   {
     "count": 7,
-    "lastResp": "2026-02-19",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-19",
     "tags": []
   },
   {
     "count": 24,
-    "lastResp": "2026-02-16",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-16",
     "tags": []
   },
   {
     "count": 5,
-    "lastResp": "2026-01-06",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-01-06",
     "tags": []
   },
   {
     "count": 4,
-    "lastResp": "2025-11-30",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2025-11-30",
     "tags": []
   },
   {
     "count": 46,
-    "lastResp": "2026-02-14",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-14",
     "tags": [
       "STICKING"
     ]
   },
   {
     "count": 5,
-    "lastResp": "2026-03-15",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-03-15",
     "tags": []
   },
   {
     "count": 6,
-    "lastResp": "2026-04-14",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-04-14",
     "tags": []
   },
   {
     "count": 8,
-    "lastResp": "2026-05-11",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-05-11",
     "tags": []
   },
   {
     "count": 8,
-    "lastResp": "2026-05-18",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-05-18",
     "tags": []
   },
   {
     "count": 19,
-    "lastResp": "2026-03-02",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-03-02",
     "tags": []
   },
   {
     "count": 18,
-    "lastResp": "2026-02-15",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-15",
     "tags": []
   },
   {
     "count": 6,
-    "lastResp": "2026-03-17",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-03-17",
     "tags": []
   },
   {
     "count": 8,
-    "lastResp": "2026-05-07",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-05-07",
     "tags": []
   },
   {
     "count": 5,
-    "lastResp": "2026-01-28",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-01-28",
     "tags": []
   },
   {
     "count": 17,
-    "lastResp": "2026-02-10",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-10",
     "tags": [
       "STICKING"
     ]
   },
   {
     "count": 20,
-    "lastResp": "2026-02-18",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-18",
     "tags": []
   },
   {
     "count": 4,
-    "lastResp": "2026-04-03",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-04-03",
     "tags": []
   },
   {
     "count": 6,
-    "lastResp": "2026-01-07",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-01-07",
     "tags": []
   },
   {
     "count": 48,
-    "lastResp": "2026-02-17",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-17",
     "tags": []
   },
   {
     "count": 20,
-    "lastResp": "2026-02-05",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-05",
     "tags": [
       "STICKING"
     ]
   },
   {
     "count": 14,
-    "lastResp": "2026-04-15",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-04-15",
     "tags": []
   },
   {
     "count": 6,
-    "lastResp": "2026-03-04",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-03-04",
     "tags": []
   },
   {
     "count": 3,
-    "lastResp": "2026-01-15",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-01-15",
     "tags": []
   },
   {
     "count": 5,
-    "lastResp": "2026-03-25",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-03-25",
     "tags": []
   },
   {
     "count": 5,
-    "lastResp": "2026-05-05",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-05-05",
     "tags": []
   },
   {
     "count": 6,
-    "lastResp": "2026-01-05",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-01-05",
     "tags": []
   },
   {
     "count": 5,
-    "lastResp": "2026-02-18",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-18",
     "tags": []
   },
   {
     "count": 3,
-    "lastResp": "2026-01-04",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-01-04",
     "tags": []
   },
   {
     "count": 9,
-    "lastResp": "2026-02-14",
+    "lastResp": "FAMILIAR",
+    "lastDate": "2026-02-14",
     "tags": []
   }
 ];
@@ -593,21 +623,21 @@ new Chart(document.getElementById('trendChart'), {
 // ===== 7. 词汇熟悉度分布 =====
 (function renderFamBars() {
   const container = document.getElementById('famBars');
-  // 从学习记录统计：计数分段
-  let high=0, mid=0, low=0, sticking=0;
+  // 从 last_response + tags 统计
+  let familiar=0, vague=0, forget=0, sticking=0;
   studyRecords.forEach(r => {
     if (r.tags.includes('STICKING')) sticking++;
-    else if (r.count >= 10) high++;
-    else if (r.count >= 5)  mid++;
-    else                    low++;
+    else if (r.lastResp === 'FORGET') forget++;
+    else if (r.lastResp === 'VAGUE') vague++;
+    else familiar++;
   });
-  const total = high + mid + low + sticking || 1;
+  const total = familiar + vague + forget + sticking || 1;
   const pct = v => Math.round(v / total * 100);
   const famData = [
-    { label: '认识 (≥10次)', count: high, pct: pct(high), color: '#3B6D11' },
-    { label: '模糊 (5-9次)', count: mid,  pct: pct(mid),  color: '#A66E00' },
-    { label: '忘记 (<5次)',  count: low,  pct: pct(low),  color: '#C44032' },
-    { label: '顽固词',      count: sticking, pct: pct(sticking), color: '#993C1D' }
+    { label: '认识', count: familiar, pct: pct(familiar), color: '#3B6D11' },
+    { label: '模糊', count: vague,    pct: pct(vague),    color: '#A66E00' },
+    { label: '忘记', count: forget,   pct: pct(forget),   color: '#C44032' },
+    { label: '顽固词', count: sticking, pct: pct(sticking), color: '#993C1D' }
   ];
   famData.forEach(d => {
     const row = document.createElement('div');
