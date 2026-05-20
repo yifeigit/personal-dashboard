@@ -141,37 +141,6 @@
   .filt-btn.active { background: #3B6D11; color: #fff; border-color: transparent; }
   .filt-btn:hover:not(.active) { background: #f0f0ee; }
 
-  /* 高亮关注单词 */
-  .attention-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
-  }
-  .attention-item {
-    background: linear-gradient(135deg, #FDECEA 0%, #FFF5F5 100%);
-    border: 0.5px solid #F5C6C0;
-    border-radius: 10px;
-    padding: 12px 14px;
-  }
-  .attention-item.vague {
-    background: linear-gradient(135deg, #FFF3E0 0%, #FFFBF5 100%);
-    border-color: #F5DAA0;
-  }
-  .att-word { font-size: 14px; font-weight: 600; color: #2c2c2a; margin-bottom: 4px; }
-  .att-reason { font-size: 11px; color: #999; }
-
-  /* 学习热力图 */
-  .memo-heatmap { display: flex; flex-direction: column; gap: 3px; }
-  .mh-row { display: flex; gap: 3px; align-items: center; }
-  .mh-label { font-size: 10px; color: #bbb; width: 24px; flex-shrink: 0; text-align: right; padding-right: 4px; }
-  .mh-cell {
-    width: 18px; height: 18px; border-radius: 3px;
-    cursor: default; transition: opacity 0.1s; flex-shrink: 0;
-  }
-  .mh-cell:hover { opacity: 0.75; transform: scale(1.15); }
-  .mh-legend { display: flex; align-items: center; gap: 3px; margin-top: 8px; font-size: 11px; color: #bbb; justify-content: flex-end; }
-  .mh-legend-dot { width: 12px; height: 12px; border-radius: 2px; }
-
   /* 统计条 */
   .stat-bars { display: flex; flex-direction: column; gap: 10px; }
   .stat-bar-row { display: flex; align-items: center; gap: 10px; }
@@ -179,20 +148,6 @@
   .stat-bar-track { flex: 1; height: 18px; background: #f0f0ee; border-radius: 6px; overflow: hidden; }
   .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
   .stat-bar-val { font-size: 12px; font-weight: 500; color: #2c2c2a; width: 40px; text-align: right; }
-
-  /* 学习记录小卡 */
-  .record-list { max-height: 280px; overflow-y: auto; }
-  .record-item {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 7px 0; border-bottom: 0.5px solid rgba(0,0,0,0.04); font-size: 12px;
-  }
-  .record-item:last-child { border-bottom: none; }
-  .rec-word { font-weight: 500; color: #2c2c2a; }
-  .rec-count { font-size: 11px; color: #888; background: #f5f4f0; padding: 1px 8px; border-radius: 10px; }
-  .rec-tag {
-    font-size: 9px; padding: 1px 6px; border-radius: 6px; margin-left: 6px;
-  }
-  .tag-sticking { background: #FDECEA; color: #C44032; }
 
   .footer { text-align: center; font-size: 11px; color: #ccc; padding: 20px 0 32px; }
 </style>
@@ -273,20 +228,6 @@
     </div>
   </div>
 
-  <!-- 第二行：需重点关注 + 学习热力图 -->
-  <div class="charts-grid">
-    <div class="card">
-      <div class="card-title">需重点复习</div>
-      <div class="card-sub">今日反应为「忘记」或「模糊」的词汇</div>
-      <div class="attention-grid" id="attentionGrid"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">近30天学习热力图</div>
-      <div class="card-sub">每日学习量（模拟）</div>
-      <div id="memoHeatmap" style="margin-top:8px"></div>
-    </div>
-  </div>
-
   <!-- 第三行：全部单词表 -->
   <div class="card full-card" style="margin-bottom:16px">
     <div class="card-title">今日全部 50 词</div>
@@ -326,13 +267,6 @@
       <div class="card-sub">基于学习记录的标签统计</div>
       <div class="stat-bars" id="famBars" style="margin-top:8px"></div>
     </div>
-  </div>
-
-  <!-- 第五行：高频复习词 -->
-  <div class="card full-card">
-    <div class="card-title">高频复习词汇 TOP 15</div>
-    <div class="card-sub">学习次数最多的词 · 数据来自学习记录</div>
-    <div class="record-list" id="recordList"></div>
   </div>
 
 </main>
@@ -525,12 +459,6 @@ const weeklyTrend = [
   { date:'05/20', mins:4.9,  newWords:17 }
 ];
 
-// ===== 模拟学习热力图数据 =====
-const learnDays = {};
-weeklyTrend.forEach(d => {
-  if (d.mins > 0) learnDays[d.date] = d.newWords;
-});
-
 // ===== 1. 环形进度图 =====
 const ringPct = memoData.finished / memoData.total;
 new Chart(document.getElementById('memoRingChart'), {
@@ -573,77 +501,6 @@ new Chart(document.getElementById('respDistChart'), {
     }, cutout: '58%'
   }
 });
-
-// ===== 3. 需重点关注 =====
-const attGrid = document.getElementById('attentionGrid');
-const needAttn = memoData.todayItems.filter(i => i.resp === 1 || i.resp === 2);
-needAttn.forEach((item, idx) => {
-  const div = document.createElement('div');
-  div.className = 'attention-item' + (item.resp === 2 ? ' vague' : '');
-  div.innerHTML = `<div class="att-word">${item.spelling}</div><div class="att-reason">${item.resp === 1 ? '忘记了，需要加强记忆' : '印象模糊，再巩固一下'} · 第 ${item.order} 序</div>`;
-  attGrid.appendChild(div);
-});
-
-// ===== 4. 学习热力图 =====
-(function renderMemoHeatmap() {
-  const container = document.getElementById('memoHeatmap');
-  const wrap = document.createElement('div');
-  wrap.className = 'memo-heatmap';
-  // 5月7日到5月20日，从周三开始
-  const startDate = new Date(2026, 4, 7);
-  const endDate = new Date(2026, 4, 20);
-  const startDow = startDate.getDay(); // 3 = Wed
-  const totalDays = Math.round((endDate - startDate) / 86400000) + 1; // 14 days
-  const totalCols = Math.ceil((startDow + totalDays) / 7);
-
-  const tbl = document.createElement('div');
-  tbl.style.cssText = 'display:grid;grid-template-columns:24px repeat(' + totalCols + ',18px);gap:3px';
-  const weekLabels = ['日','一','二','三','四','五','六'];
-
-  for (let row = 0; row <= 7; row++) {
-    const lbl = document.createElement('div');
-    lbl.style.cssText = 'font-size:10px;color:#ccc;text-align:right;padding-right:3px;height:18px;display:flex;align-items:center;justify-content:flex-end';
-    if (row > 0) lbl.textContent = weekLabels[row - 1];
-    tbl.appendChild(lbl);
-    for (let col = 0; col < totalCols; col++) {
-      if (row === 0) {
-        const cell = document.createElement('div');
-        cell.style.cssText = 'font-size:10px;color:#bbb;height:18px;display:flex;align-items:center';
-        const dayIdx = col * 7 - startDow;
-        if (dayIdx >= 0 && dayIdx < totalDays) {
-          const d = new Date(startDate.getTime() + dayIdx * 86400000);
-          if (d.getDate() <= 7) cell.textContent = (d.getMonth() + 1) + '月';
-        }
-        tbl.appendChild(cell);
-      } else {
-        const dayIdx = col * 7 + (row - 1) - startDow;
-        const cell = document.createElement('div');
-        cell.className = 'mh-cell';
-        if (dayIdx < 0 || dayIdx >= totalDays) {
-          cell.style.background = 'transparent';
-        } else {
-          const d = new Date(startDate.getTime() + dayIdx * 86400000);
-          const key = '0' + (d.getMonth()+1) + '/' + String(d.getDate()).padStart(2,'0');
-          const count = learnDays[key] || 0;
-          let color;
-          if (count === 0)     color = '#f0f0ee';
-          else if (count <= 15) color = '#B5D4F4';
-          else if (count <= 19) color = '#378ADD';
-          else                 color = '#185FA5';
-          cell.style.background = color;
-          cell.title = `5/${String(d.getDate()).padStart(2,'0')}: ${count > 0 ? count + ' 新词' : '休息'}`;
-        }
-        tbl.appendChild(cell);
-      }
-    }
-  }
-  wrap.appendChild(tbl);
-  const legend = document.createElement('div');
-  legend.className = 'mh-legend';
-  legend.innerHTML = '<span>少</span><div class="mh-legend-dot" style="background:#f0f0ee"></div><div class="mh-legend-dot" style="background:#B5D4F4"></div><div class="mh-legend-dot" style="background:#378ADD"></div><div class="mh-legend-dot" style="background:#185FA5"></div><span>多</span>';
-  wrap.appendChild(legend);
-  container.appendChild(wrap);
-})();
 
 // ===== 5. 全部单词表格 =====
 let currentFilter = 'all';
@@ -751,31 +608,6 @@ new Chart(document.getElementById('trendChart'), {
       <div class="stat-bar-val">${d.count}</div>
     `;
     container.appendChild(row);
-  });
-})();
-
-// ===== 8. 高频复习词汇 TOP 15 =====
-(function renderRecords() {
-  const container = document.getElementById('recordList');
-  studyRecords.sort((a,b) => b.count - a.count).slice(0, 15).forEach((r, i) => {
-    const div = document.createElement('div');
-    div.className = 'record-item';
-    const tagHtml = r.tags.includes('STICKING')
-      ? '<span class="rec-tag tag-sticking">顽固</span>' : '';
-    const respColor = r.lastResp === 'FORGET' ? '#C44032'
-                     : r.lastResp === 'VAGUE' ? '#A66E00' : '#3B6D11';
-    div.innerHTML = `
-      <span style="display:flex;align-items:center;gap:6px">
-        <span style="font-size:11px;color:#bbb;width:16px">#${i+1}</span>
-        <span class="rec-word">${r.word}</span>
-        ${tagHtml}
-      </span>
-      <span style="display:flex;align-items:center;gap:8px">
-        <span class="rec-count">${r.count}次</span>
-        <span style="font-size:10px;padding:1px 6px;border-radius:6px;color:${respColor};background:${respColor}18">${r.lastResp}</span>
-      </span>
-    `;
-    container.appendChild(div);
   });
 })();
 </script>
