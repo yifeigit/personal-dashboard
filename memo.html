@@ -593,11 +593,21 @@ new Chart(document.getElementById('trendChart'), {
 // ===== 7. 词汇熟悉度分布 =====
 (function renderFamBars() {
   const container = document.getElementById('famBars');
+  // 从学习记录统计：计数分段
+  let high=0, mid=0, low=0, sticking=0;
+  studyRecords.forEach(r => {
+    if (r.tags.includes('STICKING')) sticking++;
+    else if (r.count >= 10) high++;
+    else if (r.count >= 5)  mid++;
+    else                    low++;
+  });
+  const total = high + mid + low + sticking || 1;
+  const pct = v => Math.round(v / total * 100);
   const famData = [
-    { label: '认识', count: 43, pct: 86, color: '#3B6D11' },
-    { label: '模糊', count: 1,  pct: 2,  color: '#A66E00' },
-    { label: '忘记', count: 6,  pct: 12, color: '#C44032' },
-    { label: '顽固词', count: 6, pct: 0, color: '#993C1D' }
+    { label: '认识 (≥10次)', count: high, pct: pct(high), color: '#3B6D11' },
+    { label: '模糊 (5-9次)', count: mid,  pct: pct(mid),  color: '#A66E00' },
+    { label: '忘记 (<5次)',  count: low,  pct: pct(low),  color: '#C44032' },
+    { label: '顽固词',      count: sticking, pct: pct(sticking), color: '#993C1D' }
   ];
   famData.forEach(d => {
     const row = document.createElement('div');
