@@ -1517,7 +1517,8 @@ const studyRecords = [
   }
 ];
 
-// ===== 从学习记录 + 今日数据生成趋势 =====
+// ===== 从学习日志生成趋势（自动记录，最多14天） =====
+const studyLog = [{"date":"05/20","mins":4.9,"words":50}];
 function p2(n) { return n < 10 ? '0' + n : '' + n; }
 const weeklyTrend = [];
 const now2 = new Date();
@@ -1525,19 +1526,8 @@ for (let i = 13; i >= 0; i--) {
   const d = new Date(now2);
   d.setDate(d.getDate() - i);
   const key = p2(d.getMonth()+1) + '/' + p2(d.getDate());
-  const dayRecords = studyRecords.filter(r => {
-    if (!r.lastDate) return false;
-    const parts = r.lastDate.slice(5).split('-');
-    return parts[0] + '/' + parts[1] === key;
-  });
-  // 今日用真实数据，其他天用记录计数
-  const isToday = i === 0;
-  const mins = isToday ? Math.round(memoData.studyTimeMs / 60000 * 10) / 10 : 0;
-  weeklyTrend.push({
-    date: key,
-    mins: mins,
-    words: isToday ? memoData.total : dayRecords.length
-  });
+  const entry = studyLog.find(e => e.date === key);
+  weeklyTrend.push(entry || { date: key, mins: 0, words: 0 });
 }
 
 // ===== 1. 环形进度图 =====
