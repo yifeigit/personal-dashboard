@@ -1,10 +1,8 @@
 /**
- * 一键更新仪表盘数据脚本 (v3)
+ * 一键更新仪表盘数据脚本 (v4)
  *
- * 修复说明：
- *   - coros-mcp 是 bash 脚本，必须通过 bash 执行
- *   - MaiMemo API 用 curl --noproxy '*' 绕过 Windows 代理
- *   - 所有执行均清除代理环境变量
+ * v4: 使用 npm 全局 CLI（call-tool 格式），传递 startDate/endDate 获取全量运动记录（58条）
+ * v3: 修复代理、bash 执行、变量命名等问题
  *
  * 用法：node update-data.js
  */
@@ -20,26 +18,12 @@ const MEMO      = path.join(BASE_DIR, 'memo.html');
 // ===== 配置 =====
 const MAIMEMO_TOKEN  = '9d8cd1568fa003b8c31f9e047ca5e1fd5cb60fe0c679159a1c2c3e1dde48ac19';
 const MAIMEMO_BASE  = 'https://open.maimemo.com/open/api/v1';
-const COROS_CLI      = '/c/Users/Administrator/bin/coros-mcp';
-
-// ===== 查找 bash =====
-function findBash() {
-  const candidates = [
-    'C:/Program Files/Git/bin/bash.exe',
-    'C:/Git/bin/bash.exe',
-    'C:/Program Files (x86)/Git/bin/bash.exe',
-  ];
-  for (const c of candidates) { try { if (fs.existsSync(c)) return c; } catch(e){} }
-  // 回退：用 ComSpec 看能不能找到 bash
-  return null;
-}
-const BASH = findBash();
+const COROS_CLI      = 'D:/soft/npm-global/node_modules/coros-mcp/dist/cli.js';
 
 // ===== 执行命令（清除代理）=====
-function run(cmd, useBash) {
+function run(cmd) {
   try {
     const env = Object.assign({}, process.env);
-    // 清除所有代理变量
     ['http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY',
      'all_proxy','ALL_PROXY','no_proxy','NO_PROXY'].forEach(k => { delete env[k]; });
     env.NO_PROXY = '*';
@@ -49,34 +33,30 @@ function run(cmd, useBash) {
     env.HTTP_PROXY  = '';
     env.HTTPS_PROXY = '';
 
-    const opts = {
-      encoding: 'utf-8',
-      timeout: 30000,
-      stdio: ['pipe','pipe','pipe'],
-      env: env,
-    };
-    if (useBash && BASH) opts.shell = BASH;
+    const opts = { encoding: 'utf-8', timeout: 30000, stdio: ['pipe','pipe','pipe'], env };
     return execSync(cmd, opts).trim();
   } catch (e) {
     return null;
   }
 }
 
-// ===== 调用 COROS MCP（通过 bash 执行脚本）=====
+// ===== 调用 COROS MCP (npm CLI, call-tool 格式) =====
 function corosCall(tool, args) {
-  // 构建 JSON 参数字符串（合法 JSON）
   const argStr = (args !== undefined && args !== null)
     ? (typeof args === 'object' ? JSON.stringify(args) : String(args))
     : '{}';
-  // 命令：用 bash -c 执行，参数用单引号包裹（bash 单引号内所有字符字面量）
-  const inner = COROS_CLI + ' ' + tool + " '" + argStr + "'";
-  const cmd   = BASH ? ('"' + BASH + '" -c "' + inner.replace(/"/g, '\\"') + '"') : (COROS_CLI + ' ' + tool + " '" + argStr + "'");
-  const raw   = run(cmd, false);  // 已经用 bash -c 包裹，不需要再用 shell
+  const cmd = 'node "' + COROS_CLI + '" call-tool --tool ' + tool + ' --arguments-json "' + argStr.replace(/"/g, '\\"') + '"';
+  const raw = run(cmd);
   if (!raw || raw[0] !== '{') return '';
   try {
     const j = JSON.parse(raw);
-    const text = (j && j.result && j.result.content && j.result.content[0] && j.result.content[0].text) || '';
-    return text.replace(/^"|"$/g, '').replace(/\\n/g, '\n').replace(/\\"/g, '"');
+    let text = (j && j.content && j.content[0] && j.content[0].text) || '';
+    // 文本是 JSON 字符串（外层带引号、内层 \\n \\\" 转义）
+    // JSON.parse 已解码一次，还需要手工处理剩余的转义
+    text = text.replace(/^"|"$/g, '');              // 去掉外层引号
+    text = text.replace(/\\n/g, '\n');               // \\n → 真实换行
+    text = text.replace(/\\"/g, '"');                // \\" → 真实双引号
+    return text;
   } catch (e) { return raw; }
 }
 
@@ -84,7 +64,6 @@ function corosCall(tool, args) {
 function maimemoCurl(endpoint, body) {
   const data = JSON.stringify(body || {});
   const url  = MAIMEMO_BASE + endpoint;
-  // 构造 curl 命令：Header 用双引号（兼容 cmd.exe 和 bash）
   const cmd = [
     'curl', '-s', '--noproxy', '*', '--max-time', '15',
     '-X', 'POST',
@@ -93,7 +72,7 @@ function maimemoCurl(endpoint, body) {
     '-H', '"Content-Type: application/json"',
     '-d', '"' + data.replace(/"/g, '\\"') + '"',
   ].join(' ');
-  const raw = run(cmd, false);
+  const raw = run(cmd);
   if (!raw) return null;
   try { return JSON.parse(raw); } catch (e) {
     console.log('  [curl] parse error, head:', raw.slice(0, 80));
@@ -112,15 +91,22 @@ function fetchCorosData() {
     ['fitness',   'queryFitnessAssessmentOverview',      {}],
     ['recovery',  'queryRecoveryStatus',                {}],
     ['restingHr', 'queryRestingHeartRate',             { days:7, timezone:'Asia/Shanghai' }],
-    ['sleepData',  'querySleepData',                    { days:90, timezone:'Asia/Shanghai' }],
-    ['sportRecords','querySportRecords',               { limit:200, timezone:'Asia/Shanghai' }],
-    ['dailyHealth', 'queryDailyHealthData',           { days:90, timezone:'Asia/Shanghai' }],
+    ['sleepData',  'querySleepData',                    { days:30, timezone:'Asia/Shanghai' }],
+    // ★ v4: 传 startDate/endDate 获取全量运动记录
+    ['sportRecords','querySportRecords',               { startDate:'20260101', endDate:'20260520', limit:200, timezone:'Asia/Shanghai' }],
+    ['dailyHealth', 'queryDailyHealthData',           { days:30, timezone:'Asia/Shanghai' }],
   ];
   for (const [key, tool, args] of tasks) {
     process.stdout.write('  [coros] ' + key + ' ...');
     const v = corosCall(tool, args);
     out[key] = v || '';
-    console.log(v ? ' ✓' : ' ✗ empty');
+    // 统计运动记录数
+    if (key === 'sportRecords') {
+      const cnt = (v.match(/\d+\.\s+Outdoor\s+Run/g) || []).length;
+      console.log(' ✓ (' + cnt + ' records)');
+    } else {
+      console.log(v ? ' ✓' : ' ✗ empty');
+    }
   }
   return out;
 }
@@ -153,82 +139,105 @@ function fetchMaiMemo() {
 
 // ■■■ 3. 解析 COROS 文本 → JS 对象 ■■■
 function parseCoros(textBlocks) {
-  const runs = [], allRuns = [], sleepDays = [], sleepStages = [];
+  const runs = [], allRuns = new Map(), sleepDays = [], sleepStages = [];
   let vo2max = 54, restingHr = 43, recovery = 100;
 
-  // -- 运动记录（详细数据）--
-  const sportMap = {}; // date -> { dist, pace, hr, duration }
+  // -- 运动记录（精确数据，来自 querySportRecords）--
   const sr = textBlocks.sportRecords || '';
-  if (sr && sr.includes('Sport Records')) {
-    const re = /(\d+)\.\s+(.+?)\s+—\s+(\d{4}-\d{2}-\d{2})[\s\S]*?Duration:\s*([\d:]+)\s*\|[\s\S]*?Distance:\s*([\d.]+)\s*km[\s\S]*?Average\s+Pace:\s*([\d:]+)[\s\S]*?Avg\s+HR:\s*(\d+)/g;
+  if (sr) {
+    // 匹配格式: "#. SportType — date\n Duration: ... | Distance: X.XX km\n Average Pace: X:XX /km | Avg HR: XXX bpm"
+    const re = /(\d+)\.\s+Outdoor\s+Run\s*—\s*(\d{4}-\d{2}-\d{2})[\s\S]*?Duration:\s*([\d:]+)\s*\|[\s\S]*?Distance:\s*([\d.]+)\s*km[\s\S]*?Average\s+Pace:\s*([\d:]+)\s*\/km[\s\S]*?Avg\s+HR:\s*(\d+)/g;
     let m;
     while ((m = re.exec(sr)) !== null) {
-      const dateKey = m[3]; // YYYY-MM-DD
-      const paceStr = m[6];
+      const dateKey = m[2]; // YYYY-MM-DD
+      const dist = parseFloat(m[4]);
+      if (!dist || dist < 0.3) continue;
+
+      const paceStr = m[5];
       const pp = paceStr.split(':');
       const pace = parseInt(pp[0]) + (parseInt(pp[1])||0)/60;
-      sportMap[dateKey] = {
-        date: dateKey.slice(5).replace('-','/'),
-        dist: parseFloat(m[5]),
-        pace: Math.round(pace*100)/100,
-        hr: parseInt(m[7]),
-        hasDetail: true,
-      };
-      allRuns.push(sportMap[dateKey]);
+      const hr = parseInt(m[6]);
+
+      const dateShort = dateKey.slice(5).replace('-','/');
+      const existing = allRuns.get(dateKey);
+      if (existing) {
+        const totalDist = existing.dist + dist;
+        const weightedPace = (existing.dist * existing.pace + dist * pace) / totalDist;
+        const weightedHr = Math.round((existing.dist * existing.hr + dist * hr) / totalDist);
+        allRuns.set(dateKey, {
+          date: existing.date,
+          dist: Math.round(totalDist * 100) / 100,
+          pace: Math.round(weightedPace * 100) / 100,
+          hr: weightedHr,
+          hasDetail: true,
+        });
+      } else {
+        allRuns.set(dateKey, {
+          date: dateShort,
+          dist: dist,
+          pace: Math.round(pace * 100) / 100,
+          hr: hr,
+          hasDetail: true,
+        });
+      }
     }
   }
 
-  // -- 每日健康数据（补全缺失的跑步日）--
+  // -- 每日健康数据（补全 sportRecords 中缺失的跑步日）--
   const dh = textBlocks.dailyHealth || '';
   if (dh && dh.includes('Daily Health Data')) {
-    // 按日期块分割，每块格式: "--- 20260421 ---\nSteps:...\nExercise:..."
-    // 用 lookahead 保持分隔符
     const dhBlocks = dh.split(/(?=---\s*\d{8}\s*---)/);
+    let filledCount = 0;
     for (let i = 0; i < dhBlocks.length; i++) {
       const block = dhBlocks[i];
       const dm = block.match(/---\s*(\d{4})(\d{2})(\d{2})\s*---/);
       if (!dm) continue;
       const dateKey = dm[1] + '-' + dm[2] + '-' + dm[3];
 
-      // 跳过已有详细数据的日期
-      if (sportMap[dateKey]) continue;
+      // 跳过已有精确数据的日期
+      if (allRuns.has(dateKey)) continue;
 
-      // 只匹配本块内的 Exercise（格式: "Xh Ymin" 或 "X min"）
       const em = block.match(/Exercise:\s*(?:(\d+)h\s*)?(\d+)\s*min/);
       if (!em) continue;
       const h = parseInt(em[1] || '0');
       const exMin = h * 60 + parseInt(em[2]);
-      if (exMin < 15) continue; // 少于15分钟不算跑步
+      if (exMin < 15) continue;
 
-      // 用典型配速估算距离 (~6 min/km)
+      // 估算距离（用基线配速）
       const estDist = Math.round(exMin / 6 * 100) / 100;
 
-      allRuns.push({
+      allRuns.set(dateKey, {
         date: dateKey.slice(5).replace('-','/'),
         dist: estDist,
-        pace: 6.0,
-        hr: 0,    // 无实际心率数据，用0标记（图表中不显示）
+        pace: 0,   // 无精确数据
+        hr: 0,     // 无精确数据
         hasDetail: false,
       });
+      filledCount++;
     }
+    if (filledCount > 0) console.log('  每日健康补全: ' + filledCount + ' 天');
   }
 
-  // 按日期排序
-  allRuns.sort(function(a, b) {
+  // 转为数组并按日期排序
+  const runsArr = Array.from(allRuns.values());
+  runsArr.sort(function(a, b) {
     var da = new Date('2020-' + a.date.replace('/','-'));
     var db = new Date('2020-' + b.date.replace('/','-'));
     return da - db;
   });
 
-  // 取最近 90 天给 runs
+  // 取最近 30 天给 runs
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 90);
+  cutoff.setDate(cutoff.getDate() - 30);
   const cutoffStr = cutoff.toISOString().slice(0,10);
-  const recentRuns = allRuns.filter(function(r) {
-    var d = new Date(cutoffStr.slice(0,4) + '-' + r.date.replace('/','-'));
-    return d >= cutoff;
-  });
-  runs.push(...recentRuns);
+  const detailCount = runsArr.filter(r => r.hasDetail).length;
+  const estCount = runsArr.filter(r => !r.hasDetail).length;
+  console.log('  总运动记录: ' + runsArr.length + ' (精确: ' + detailCount + ', 估算: ' + estCount + ')');
+
+  for (let i = 0; i < runsArr.length; i++) {
+    var d = new Date(cutoffStr.slice(0,4) + '-' + runsArr[i].date.replace('/','-'));
+    if (d >= cutoff) runs.push(runsArr[i]);
+  }
 
   // -- 睡眠 --
   const sl = textBlocks.sleepData || '';
@@ -242,11 +251,10 @@ function parseCoros(textBlocks) {
         h: Math.round((parseInt(m[3]) + parseInt(m[4])/60)*100)/100,
       });
     }
-    // 阶段
     const re3 = /(\d{4}-\d{2}-\d{2})[\s\S]*?Deep Sleep Ratio:\s*(\d+)%[\s\S]*?Light Sleep Ratio:\s*(\d+)%[\s\S]*?REM Ratio:\s*(\d+)%[\s\S]*?Awake Ratio:\s*(\d+)%/g;
     while ((m = re3.exec(sl)) !== null) {
       const d = m[1].slice(5).replace('-','/');
-      if (d.endsWith('17')) continue; // 跳过无效日期
+      if (d.endsWith('17')) continue;
       sleepStages.push({
         date: d,
         deep: parseInt(m[2]), light: parseInt(m[3]),
@@ -264,12 +272,11 @@ function parseCoros(textBlocks) {
   const m2 = rt.match(/Recovery:\s*(\d+)/);
   if (m2) recovery = parseInt(m2[1]);
 
-  // 静息心率：取最近一天的数据
   const rh = textBlocks.restingHr || '';
   const m3 = rh.match(/(\d{4}-\d{2}-\d{2}):\s*(\d+)\s*bpm/);
   if (m3) restingHr = parseInt(m3[2]);
 
-  return { runs, allRuns, sleepDays, sleepStages, vo2max, restingHr, recovery };
+  return { runs, allRuns: runsArr, sleepDays, sleepStages, vo2max, restingHr, recovery };
 }
 
 // ■■■ 4. 写入 dashboard.html ■■■
@@ -319,7 +326,7 @@ function updateDashboard(data) {
   );
 
   fs.writeFileSync(DASHBOARD, html, 'utf8');
-  console.log('  ✓ dashboard.html 已更新');
+  console.log('  ✓ dashboard.html 已更新 (' + data.runs.length + ' 条近期跑步记录)');
   return true;
 }
 
@@ -335,7 +342,6 @@ function updateMemo(memo) {
   let html = fs.readFileSync(MEMO, 'utf8');
   const now  = new Date().toISOString().slice(0, 10);
   const p    = memo.progress;
-  // first_response 映射：FAMILIAR→0, FORGET→1, VAGUE→2
   const RESP_MAP = { FAMILIAR:0, FORGET:1, VAGUE:2 };
   const items = memo.items.map(function(it) {
     return {
@@ -353,7 +359,6 @@ function updateMemo(memo) {
     };
   });
 
-  // memoData 对象
   html = html.replace(
     /const memoData = \{[\s\S]*?\};/m,
     'const memoData = {\n' +
@@ -362,7 +367,6 @@ function updateMemo(memo) {
     '  todayItems: ' + JSON.stringify(items) + '\n};'
   );
 
-  // studyRecords 数组
   html = html.replace(
     /const studyRecords = \[[\s\S]*?\];/m,
     'const studyRecords = ' + JSON.stringify(recs, null, 2) + ';'
@@ -379,12 +383,12 @@ function gitDeploy() {
   console.log('\n' + '═'.repeat(48));
   console.log('  STEP 5/5  Git 提交 & 推送');
   console.log('═'.repeat(48));
-  run('git add dashboard.html memo.html', false);
-  const diff = run('git diff --cached --stat', false) || '';
+  run('git add dashboard.html memo.html');
+  const diff = run('git diff --cached --stat') || '';
   if (!diff.trim()) { console.log('  无变化，跳过提交'); return false; }
   const ts = new Date().toISOString().slice(0,16).replace('T',' ');
-  run('git commit -m "auto-update: ' + ts + '"', false);
-  run('git push', false);
+  run('git commit -m "auto-update: ' + ts + '"');
+  run('git push');
   console.log('\n  ✓ 已推送！GitHub Pages 约 1~2 分钟后生效\n');
   console.log('  运动健康: https://yifeigit.github.io/personal-dashboard/dashboard.html');
   console.log('  背单词:   https://yifeigit.github.io/personal-dashboard/memo.html');
@@ -397,7 +401,7 @@ function logTitle(s) { console.log('\n' + '═'.repeat(48) + '\n  ' + s + '\n' +
 // ===== 主流程 =====
 (function() {
   const line = '╔' + '═'.repeat(36) + '╗';
-  const mid  = '║' + ' 仪表盘数据一键更新工具  v3'.padEnd(38) + '║';
+  const mid  = '║' + ' 仪表盘数据一键更新工具  v4'.padEnd(38) + '║';
   const line2= '╚' + '═'.repeat(36) + '╝';
   console.log('\n' + line + '\n' + mid + '\n' + line2);
 
@@ -409,5 +413,5 @@ function logTitle(s) { console.log('\n' + '═'.repeat(48) + '\n  ' + s + '\n' +
   updateMemo(memo);
   gitDeploy();
 
-  logTitle('完成! 感谢使用  🏃');
+  logTitle('完成! 大量精确数据已就绪   ');
 })();
