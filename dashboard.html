@@ -1068,19 +1068,41 @@ function paceLabel(v) {
   const m = Math.floor(v); const s = Math.round((v - m) * 60);
   return `${m}:${String(s).padStart(2,'0')}`;
 }
+// ===== 构建连续 30 天横坐标（无跑步日留空） =====
+const fullLabels = [], distFull = [], paceFull = [], hrFull = [];
+const now = new Date();
+const pad = n => String(n).padStart(2, '0');
+for (let i = 29; i >= 0; i--) {
+  const d = new Date(now);
+  d.setDate(d.getDate() - i);
+  const key = pad(d.getMonth()+1) + '/' + pad(d.getDate());
+  fullLabels.push(key);
+  // 查 runs 中是否有该日期
+  const r = runs.find(r => r.date === key);
+  if (r) {
+    distFull.push(r.dist);
+    paceFull.push(r.pace > 0 ? r.pace : null);
+    hrFull.push(r.hr > 0 ? r.hr : null);
+  } else {
+    distFull.push(0);
+    paceFull.push(null);
+    hrFull.push(null);
+  }
+}
+
 function switchMainChart(type, btn) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (mainChart) mainChart.destroy();
   const cfg = {
-    dist:  { data: runs.map(r => r.dist),                              color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
-    pace:  { data: runs.map(r => r.pace > 0 ? r.pace : null),          color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
-    hr:    { data: runs.map(r => r.hr > 0 ? r.hr : null),              color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
+    dist:  { data: distFull,   color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
+    pace:  { data: paceFull,   color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
+    hr:    { data: hrFull,     color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
   }[type];
   mainChart = new Chart(document.getElementById('mainChart'), {
     type: 'line',
     data: {
-      labels: runs.map(r => r.date),
+      labels: fullLabels,
       datasets: [{
         label: cfg.label, data: cfg.data,
         borderColor: cfg.color, backgroundColor: cfg.color + '18',
