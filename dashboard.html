@@ -279,70 +279,70 @@ const runs = [
       "date": "04/22",
       "dist": 10.33,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/29",
       "dist": 10.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/03",
       "dist": 10.83,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/04",
       "dist": 10.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/05",
       "dist": 10.5,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/06",
       "dist": 12,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/08",
       "dist": 11.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/10",
       "dist": 5.5,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/11",
       "dist": 12.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/13",
       "dist": 10.17,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
@@ -365,70 +365,70 @@ const allRuns = [
       "date": "04/22",
       "dist": 10.33,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "04/29",
       "dist": 10.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/03",
       "dist": 10.83,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/04",
       "dist": 10.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/05",
       "dist": 10.5,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/06",
       "dist": 12,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/08",
       "dist": 11.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/10",
       "dist": 5.5,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/11",
       "dist": 12.67,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
       "date": "05/13",
       "dist": 10.17,
       "pace": 6,
-      "hr": null,
+      "hr": 0,
       "hasDetail": false
     },
     {
@@ -780,7 +780,7 @@ function switchMainChart(type, btn) {
   if (mainChart) mainChart.destroy();
   const cfg = {
     pace:  { data: allRuns.map(r => r.pace),  color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
-    hr:    { data: allRuns.map(r => r.hr),    color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 },
+    hr:    { data: allRuns.map(r => r.hr || null),    color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 },
     dist:  { data: allRuns.map(r => r.dist),  color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 }
   }[type];
   mainChart = new Chart(document.getElementById('mainChart'), {
@@ -957,7 +957,7 @@ runs.slice().reverse().slice(0, 10).forEach(r => {
     <td>5/${r.date.split('/')[1]}</td>
     <td>${r.dist.toFixed(1)} km</td>
     <td><span class="pace-chip">${paceLabel(r.pace)}/km</span></td>
-    <td>${r.hr} bpm</td>
+    <td>${r.hr ? r.hr + ' bpm' : '—'}</td>
   `;
   tbody.appendChild(tr);
 });
