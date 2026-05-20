@@ -141,14 +141,6 @@
   .filt-btn.active { background: #3B6D11; color: #fff; border-color: transparent; }
   .filt-btn:hover:not(.active) { background: #f0f0ee; }
 
-  /* 统计条 */
-  .stat-bars { display: flex; flex-direction: column; gap: 10px; }
-  .stat-bar-row { display: flex; align-items: center; gap: 10px; }
-  .stat-bar-label { font-size: 12px; color: #666; width: 80px; flex-shrink: 0; }
-  .stat-bar-track { flex: 1; height: 18px; background: #f0f0ee; border-radius: 6px; overflow: hidden; }
-  .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
-  .stat-bar-val { font-size: 12px; font-weight: 500; color: #2c2c2a; width: 40px; text-align: right; }
-
   .footer { text-align: center; font-size: 11px; color: #ccc; padding: 20px 0 32px; }
 </style>
 </head>
@@ -228,19 +220,12 @@
     </div>
   </div>
 
-  <!-- 第三行：学习趋势 + 词汇统计 -->
-  <div class="charts-grid">
-    <div class="card">
-      <div class="card-title">近两周学习趋势</div>
-      <div class="card-sub">每日学习时长 & 新词数</div>
-      <div class="chart-wrap" style="height:220px">
-        <canvas id="trendChart"></canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">词汇熟悉度分布</div>
-      <div class="card-sub">基于学习记录的标签统计</div>
-      <div class="stat-bars" id="famBars" style="margin-top:8px"></div>
+  <!-- 第三行：学习趋势 -->
+  <div class="card full-card" style="margin-bottom:16px">
+    <div class="card-title">近两周学习趋势</div>
+    <div class="card-sub">每日学习时长（分钟） & 新词数</div>
+    <div class="chart-wrap" style="height:260px">
+      <canvas id="trendChart"></canvas>
     </div>
   </div>
 
@@ -1680,36 +1665,6 @@ new Chart(document.getElementById('trendChart'), {
   }
 });
 
-// ===== 7. 词汇熟悉度分布 =====
-(function renderFamBars() {
-  const container = document.getElementById('famBars');
-  // 从 last_response + tags 统计
-  let familiar=0, vague=0, forget=0, sticking=0;
-  studyRecords.forEach(r => {
-    if (r.tags.includes('STICKING')) sticking++;
-    else if (r.lastResp === 'FORGET') forget++;
-    else if (r.lastResp === 'VAGUE') vague++;
-    else familiar++;
-  });
-  const total = familiar + vague + forget + sticking || 1;
-  const pct = v => Math.round(v / total * 100);
-  const famData = [
-    { label: '认识', count: familiar, pct: pct(familiar), color: '#3B6D11' },
-    { label: '模糊', count: vague,    pct: pct(vague),    color: '#A66E00' },
-    { label: '忘记', count: forget,   pct: pct(forget),   color: '#C44032' },
-    { label: '顽固词', count: sticking, pct: pct(sticking), color: '#993C1D' }
-  ];
-  famData.forEach(d => {
-    const row = document.createElement('div');
-    row.className = 'stat-bar-row';
-    row.innerHTML = `
-      <div class="stat-bar-label">${d.label}</div>
-      <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${d.pct}%;background:${d.color}"></div></div>
-      <div class="stat-bar-val">${d.count}</div>
-    `;
-    container.appendChild(row);
-  });
-})();
 </script>
 </body>
 </html>
