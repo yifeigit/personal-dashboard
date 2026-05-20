@@ -1518,12 +1518,13 @@ const studyRecords = [
 ];
 
 // ===== 从学习记录生成近14天趋势 =====
+function p2(n) { return n < 10 ? '0' + n : '' + n; }
 const weeklyTrend = [];
 const now2 = new Date();
 for (let i = 13; i >= 0; i--) {
   const d = new Date(now2);
   d.setDate(d.getDate() - i);
-  const key = pad(d.getMonth()+1) + '/' + pad(d.getDate());
+  const key = p2(d.getMonth()+1) + '/' + p2(d.getDate());
   // 统计该日学习的词汇数
   const dayRecords = studyRecords.filter(r => r.lastDate && r.lastDate.slice(5).replace('-','/') === key);
   // 今日用时取实际值，其他天按记录数估算（~0.3min/词）
