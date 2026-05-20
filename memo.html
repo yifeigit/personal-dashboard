@@ -228,7 +228,23 @@
     </div>
   </div>
 
-  <!-- 第三行：全部单词表 -->
+  <!-- 第三行：学习趋势 + 词汇统计 -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">近两周学习趋势</div>
+      <div class="card-sub">每日学习时长 & 新词数</div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">词汇熟悉度分布</div>
+      <div class="card-sub">基于学习记录的标签统计</div>
+      <div class="stat-bars" id="famBars" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 全部单词表 -->
   <div class="card full-card" style="margin-bottom:16px">
     <div class="card-title">今日全部 50 词</div>
     <div class="card-sub">点击表头排序 · 使用筛选按钮过滤</div>
@@ -250,22 +266,6 @@
         </tr></thead>
         <tbody id="wordTableBody"></tbody>
       </table>
-    </div>
-  </div>
-
-  <!-- 第四行：学习趋势 + 词汇统计 -->
-  <div class="charts-grid">
-    <div class="card">
-      <div class="card-title">近两周学习趋势</div>
-      <div class="card-sub">每日学习时长 & 新词数</div>
-      <div class="chart-wrap" style="height:220px">
-        <canvas id="trendChart"></canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">词汇熟悉度分布</div>
-      <div class="card-sub">基于学习记录的标签统计</div>
-      <div class="stat-bars" id="famBars" style="margin-top:8px"></div>
     </div>
   </div>
 
