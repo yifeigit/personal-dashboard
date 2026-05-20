@@ -213,7 +213,7 @@
   <div class="charts-grid">
     <div class="card">
       <div class="card-title">配速 / 心率 趋势</div>
-      <div class="card-sub">近19次跑步记录（2026-04 至今）</div>
+      <div class="card-sub">近90天跑步记录（2026-02 至今）</div>
       <div class="tabs">
         <button class="tab active" onclick="switchMainChart('pace',this)">配速</button>
         <button class="tab" onclick="switchMainChart('hr',this)">心率</button>
@@ -237,12 +237,12 @@
   <div class="bottom-grid">
     <div class="card">
       <div class="card-title">训练热力图</div>
-      <div class="card-sub">4月-5月 按跑量着色（km）</div>
+      <div class="card-sub">2月-5月 按跑量着色（km）</div>
       <div id="heatmap" style="margin-top:8px"></div>
     </div>
     <div class="card">
       <div class="card-title">最近跑步记录</div>
-      <div class="card-sub">近10次户外跑</div>
+      <div class="card-sub">最近15次跑步</div>
       <table class="run-table">
         <thead><tr>
           <th>日期</th><th>距离</th><th>配速</th><th>心率</th>
@@ -256,7 +256,7 @@
   <div class="charts-grid" style="margin-bottom:16px">
     <div class="card">
       <div class="card-title">睡眠质量趋势</div>
-      <div class="card-sub">近30天睡眠评分 · 每日时长</div>
+      <div class="card-sub">近90天睡眠评分 · 每日时长</div>
       <div class="chart-wrap" style="height:200px">
         <canvas id="sleepChart" role="img" aria-label="睡眠数据折线图"></canvas>
       </div>
@@ -1860,7 +1860,7 @@ const hmEl = document.getElementById('heatmap');
 const hmWrap = document.createElement('div');
 hmWrap.className = 'heatmap-wrap';
 const weekLabels = ['日','一','二','三','四','五','六'];
-const startDate = new Date(2026, 3, 1);
+const startDate = new Date(2026, 1, 20);
 const endDate = new Date(2026, 4, 20);
 const startDow = startDate.getDay();
 const totalDays = Math.round((endDate - startDate) / 86400000) + 1;
@@ -1922,10 +1922,12 @@ hmEl.appendChild(hmLegend);
 
 // ===== 最近跑步记录表 =====
 const tbody = document.getElementById('runTableBody');
-runs.slice().reverse().slice(0, 10).forEach(r => {
+runs.slice().reverse().slice(0, 15).forEach(r => {
   const tr = document.createElement('tr');
+  const dateParts = r.date.split('/');
+  const dateLabel = dateParts[0] + '/' + dateParts[1];
   tr.innerHTML = `
-    <td>5/${r.date.split('/')[1]}</td>
+    <td>${dateLabel}</td>
     <td>${r.dist.toFixed(1)} km</td>
     <td><span class="pace-chip">${paceLabel(r.pace)}/km</span></td>
     <td>${r.hr ? r.hr + ' bpm' : '—'}</td>
