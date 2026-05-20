@@ -213,11 +213,11 @@
   <div class="charts-grid">
     <div class="card">
       <div class="card-title">配速 / 心率 趋势</div>
-      <div class="card-sub">近90天跑步记录（2026-02 至今）</div>
+      <div class="card-sub">近90天跑步记录 · 配速/心率仅显示COROS云端同步的精确数据</div>
       <div class="tabs">
-        <button class="tab active" onclick="switchMainChart('pace',this)">配速</button>
+        <button class="tab active" onclick="switchMainChart('dist',this)">距离</button>
+        <button class="tab" onclick="switchMainChart('pace',this)">配速</button>
         <button class="tab" onclick="switchMainChart('hr',this)">心率</button>
-        <button class="tab" onclick="switchMainChart('dist',this)">距离</button>
       </div>
       <div class="chart-wrap" style="height:240px">
         <canvas id="mainChart" role="img" aria-label="跑步数据趋势图"></canvas>
@@ -226,7 +226,7 @@
 
     <div class="card">
       <div class="card-title">配速分布</div>
-      <div class="card-sub">各区间占比</div>
+      <div class="card-sub">仅精确记录（<span id="detailCount">2</span>条）</div>
       <div class="chart-wrap" style="height:240px; margin-top:28px">
         <canvas id="paceDistChart" role="img" aria-label="配速分布饼图"></canvas>
       </div>
@@ -242,7 +242,7 @@
     </div>
     <div class="card">
       <div class="card-title">最近跑步记录</div>
-      <div class="card-sub">最近15次跑步</div>
+      <div class="card-sub">最近15次 · 配速/心率标注"—"为估算数据</div>
       <table class="run-table">
         <thead><tr>
           <th>日期</th><th>距离</th><th>配速</th><th>心率</th>
@@ -1749,11 +1749,14 @@ function switchMainChart(type, btn) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (mainChart) mainChart.destroy();
+  // 距离：全部记录都有数据；配速/心率：仅精确记录有数据，估算的显示为空缺
   const cfg = {
-    pace:  { data: allRuns.map(r => r.pace),  color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
-    hr:    { data: allRuns.map(r => r.hr || null),    color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 },
-    dist:  { data: allRuns.map(r => r.dist),  color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 }
+    dist:  { data: allRuns.map(r => r.dist),        color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 },
+    pace:  { data: allRuns.map(r => r.hasDetail ? r.pace : null), color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
+    hr:    { data: allRuns.map(r => r.hasDetail ? r.hr : null),   color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 }
   }[type];
+  const pointRadius = allRuns.map(r => r.hasDetail ? 4 : 1);
+  const pointBg = allRuns.map(r => r.hasDetail ? cfg.color : '#ccc');
   mainChart = new Chart(document.getElementById('mainChart'), {
     type: 'line',
     data: {
@@ -1761,8 +1764,9 @@ function switchMainChart(type, btn) {
       datasets: [{
         label: cfg.label, data: cfg.data,
         borderColor: cfg.color, backgroundColor: cfg.color + '18',
-        borderWidth: 2, pointRadius: 4, pointBackgroundColor: cfg.color,
-        tension: 0.3, fill: true
+        borderWidth: 2, pointRadius: type === 'dist' ? 4 : pointRadius,
+        pointBackgroundColor: type === 'dist' ? cfg.color : pointBg,
+        tension: 0.3, fill: type === 'dist', spanGaps: false
       }]
     },
     options: {
@@ -1777,28 +1781,40 @@ function switchMainChart(type, btn) {
     }
   });
 }
-switchMainChart('pace', document.querySelector('.tab.active'));
+switchMainChart('dist', document.querySelector('.tab.active'));
 
-// ===== 配速分布饼图 =====
+// ===== 配速分布饼图（仅精确记录） =====
 const paceBuckets = { '< 5:30': 0, '5:30–6:00': 0, '6:00–6:30': 0, '> 6:30': 0 };
-allRuns.forEach(r => {
-  if (r.pace < 5.5)      paceBuckets['< 5:30']++;
-  else if (r.pace < 6.0) paceBuckets['5:30–6:00']++;
-  else if (r.pace < 6.5) paceBuckets['6:00–6:30']++;
-  else                   paceBuckets['> 6:30']++;
-});
-new Chart(document.getElementById('paceDistChart'), {
-  type: 'doughnut',
-  data: {
-    labels: Object.keys(paceBuckets),
-    datasets: [{ data: Object.values(paceBuckets), backgroundColor: ['#185FA5','#378ADD','#85B7EB','#B5D4F4'], borderWidth: 0, hoverOffset: 4 }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } },
-    cutout: '55%'
-  }
-});
+const detailRuns = allRuns.filter(r => r.hasDetail);
+if (detailRuns.length > 0) {
+  detailRuns.forEach(r => {
+    if (r.pace < 5.5)      paceBuckets['< 5:30']++;
+    else if (r.pace < 6.0) paceBuckets['5:30–6:00']++;
+    else if (r.pace < 6.5) paceBuckets['6:00–6:30']++;
+    else                   paceBuckets['> 6:30']++;
+  });
+}
+const paceDistEl = document.getElementById('paceDistChart');
+if (detailRuns.length >= 2) {
+  new Chart(paceDistEl, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(paceBuckets),
+      datasets: [{ data: Object.values(paceBuckets), backgroundColor: ['#185FA5','#378ADD','#85B7EB','#B5D4F4'], borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } },
+      cutout: '55%'
+    }
+  });
+} else {
+  // 精确记录不足，显示提示
+  paceDistEl.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:240px;color:#aaa;font-size:12px">配速数据不足<br><span style="font-size:11px">COROS 云端仅同步最近 ' + detailRuns.length + ' 条详细记录</span>';
+}
+// 动态更新精确记录数
+var dcEl = document.getElementById('detailCount');
+if (dcEl) dcEl.textContent = detailRuns.length;
 
 // ===== 睡眠趋势图 =====
 new Chart(document.getElementById('sleepChart'), {
@@ -1926,11 +1942,15 @@ runs.slice().reverse().slice(0, 15).forEach(r => {
   const tr = document.createElement('tr');
   const dateParts = r.date.split('/');
   const dateLabel = dateParts[0] + '/' + dateParts[1];
+  const paceHtml = r.hasDetail
+    ? '<span class="pace-chip">' + paceLabel(r.pace) + '/km</span>'
+    : '<span style="color:#bbb">—</span>';
+  const hrHtml = r.hr ? r.hr + ' bpm' : '<span style="color:#bbb">—</span>';
   tr.innerHTML = `
     <td>${dateLabel}</td>
     <td>${r.dist.toFixed(1)} km</td>
-    <td><span class="pace-chip">${paceLabel(r.pace)}/km</span></td>
-    <td>${r.hr ? r.hr + ' bpm' : '—'}</td>
+    <td>${paceHtml}</td>
+    <td>${hrHtml}</td>
   `;
   tbody.appendChild(tr);
 });
