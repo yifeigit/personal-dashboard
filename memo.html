@@ -223,7 +223,7 @@
   <!-- 第三行：学习趋势 -->
   <div class="card full-card" style="margin-bottom:16px">
     <div class="card-title">近两周学习趋势</div>
-    <div class="card-sub">每日学习时长（实际） & 词数（学习记录）</div>
+    <div class="card-sub">今日真实时长 · 近期复习记录词数</div>
     <div class="chart-wrap" style="height:260px">
       <canvas id="trendChart"></canvas>
     </div>
@@ -1517,7 +1517,7 @@ const studyRecords = [
   }
 ];
 
-// ===== 从学习记录生成近14天趋势 =====
+// ===== 从学习记录 + 今日数据生成趋势 =====
 function p2(n) { return n < 10 ? '0' + n : '' + n; }
 const weeklyTrend = [];
 const now2 = new Date();
@@ -1525,11 +1525,19 @@ for (let i = 13; i >= 0; i--) {
   const d = new Date(now2);
   d.setDate(d.getDate() - i);
   const key = p2(d.getMonth()+1) + '/' + p2(d.getDate());
-  // 统计该日学习的词汇数
-  const dayRecords = studyRecords.filter(r => r.lastDate && r.lastDate.slice(5).replace('-','/') === key);
-  // 今日用时取实际值，其他天按记录数估算（~0.3min/词）
-  const mins = i === 0 ? Math.round(memoData.studyTimeMs / 60000 * 10) / 10 : dayRecords.length * 0.3;
-  weeklyTrend.push({ date: key, mins: Math.round(mins * 10) / 10, newWords: dayRecords.length });
+  const dayRecords = studyRecords.filter(r => {
+    if (!r.lastDate) return false;
+    const parts = r.lastDate.slice(5).split('-');
+    return parts[0] + '/' + parts[1] === key;
+  });
+  // 今日用真实数据，其他天用记录计数
+  const isToday = i === 0;
+  const mins = isToday ? Math.round(memoData.studyTimeMs / 60000 * 10) / 10 : 0;
+  weeklyTrend.push({
+    date: key,
+    mins: mins,
+    words: isToday ? memoData.total : dayRecords.length
+  });
 }
 
 // ===== 1. 环形进度图 =====
@@ -1648,7 +1656,7 @@ new Chart(document.getElementById('trendChart'), {
         borderColor: '#185FA5', backgroundColor: 'transparent', borderWidth: 2,
         pointRadius: 3, pointBackgroundColor: '#185FA5', yAxisID: 'yMin',
         tension: 0.3, order: 1 },
-      { type: 'bar', label: '新词数', data: weeklyTrend.map(d => d.newWords),
+      { type: 'bar', label: '复习词数', data: weeklyTrend.map(d => d.words),
         backgroundColor: '#3B6D1188', borderColor: '#3B6D11', borderWidth: 0.5,
         borderRadius: 3, yAxisID: 'yNew', order: 2 }
     ]
