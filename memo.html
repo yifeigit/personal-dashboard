@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>野生型 · 墨墨背单词</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    background: #f5f4f0;
+    color: #2c2c2a;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .page-header {
+    background: #fff;
+    border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .page-header h1 { font-size: 16px; font-weight: 500; }
+  .page-header .sub { font-size: 12px; color: #888; margin-top: 2px; }
+  .sync-badge {
+    font-size: 11px;
+    color: #3B6D11;
+    background: #EAF3DE;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  .nav-links { display: flex; gap: 6px; align-items: center; }
+  .nav-link {
+    font-size: 12px; padding: 5px 14px; border-radius: 20px;
+    text-decoration: none; color: #888;
+    border: 0.5px solid rgba(0,0,0,0.12); transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f4f0; }
+  .nav-link.active { background: #3B6D11; color: #fff; border-color: transparent; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 24px; }
+
+  /* 指标卡片 */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+    text-align: center;
+  }
+  .metric-label { font-size: 11px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-value { font-size: 28px; font-weight: 600; line-height: 1.1; }
+  .metric-unit { font-size: 12px; color: #888; }
+  .metric-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .green { color: #3B6D11; }
+  .blue  { color: #185FA5; }
+  .amber { color: #854F0B; }
+  .purple { color: #534AB7; }
+  .red   { color: #C44032; }
+
+  /* 图表区 */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 760px) { .charts-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 22px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c2c2a;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 16px;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+  .full-card { grid-column: 1 / -1; }
+
+  /* 环形图区域 */
+  .ring-section {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    justify-content: center;
+    padding: 12px 0;
+    flex-wrap: wrap;
+  }
+  .ring-stats { display: flex; flex-direction: column; gap: 12px; }
+  .stat-row { display: flex; align-items: baseline; gap: 10px; }
+  .stat-num { font-size: 24px; font-weight: 600; min-width: 56px; text-align: right; }
+  .stat-label { font-size: 12px; color: #888; }
+  .stat-sub { font-size: 11px; color: #aaa; margin-left: auto; }
+
+  /* 单词列表 */
+  .word-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .word-table th {
+    text-align: left; padding: 7px 6px; border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    font-weight: 500; color: #aaa; font-size: 11px; cursor: pointer; user-select: none;
+  }
+  .word-table th:hover { color: #555; }
+  .word-table td {
+    padding: 7px 6px; border-bottom: 0.5px solid rgba(0,0,0,0.04); color: #444;
+  }
+  .word-table tr:last-child td { border-bottom: none; }
+  .word-spelling { font-weight: 500; color: #2c2c2a; }
+  .word-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 500;
+  }
+  .tag-new     { background: #EAF3DE; color: #3B6D11; }
+  .tag-forget  { background: #FDECEA; color: #C44032; }
+  .tag-vague   { background: #FFF3E0; color: #A66E00; }
+  .tag-familiar{ background: #E8F0E8; color: #558B5B; }
+  .tag-review  { background: #E6F1FB; color: #185FA5; }
+
+  /* 筛选按钮 */
+  .filter-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filt-btn {
+    padding: 4px 12px; border-radius: 20px; border: 0.5px solid rgba(0,0,0,0.12);
+    background: transparent; cursor: pointer; font-size: 11px; color: #888; transition: all 0.15s;
+  }
+  .filt-btn.active { background: #3B6D11; color: #fff; border-color: transparent; }
+  .filt-btn:hover:not(.active) { background: #f0f0ee; }
+
+  /* 高亮关注单词 */
+  .attention-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .attention-item {
+    background: linear-gradient(135deg, #FDECEA 0%, #FFF5F5 100%);
+    border: 0.5px solid #F5C6C0;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .attention-item.vague {
+    background: linear-gradient(135deg, #FFF3E0 0%, #FFFBF5 100%);
+    border-color: #F5DAA0;
+  }
+  .att-word { font-size: 14px; font-weight: 600; color: #2c2c2a; margin-bottom: 4px; }
+  .att-reason { font-size: 11px; color: #999; }
+
+  /* 学习热力图 */
+  .memo-heatmap { display: flex; flex-direction: column; gap: 3px; }
+  .mh-row { display: flex; gap: 3px; align-items: center; }
+  .mh-label { font-size: 10px; color: #bbb; width: 24px; flex-shrink: 0; text-align: right; padding-right: 4px; }
+  .mh-cell {
+    width: 18px; height: 18px; border-radius: 3px;
+    cursor: default; transition: opacity 0.1s; flex-shrink: 0;
+  }
+  .mh-cell:hover { opacity: 0.75; transform: scale(1.15); }
+  .mh-legend { display: flex; align-items: center; gap: 3px; margin-top: 8px; font-size: 11px; color: #bbb; justify-content: flex-end; }
+  .mh-legend-dot { width: 12px; height: 12px; border-radius: 2px; }
+
+  /* 统计条 */
+  .stat-bars { display: flex; flex-direction: column; gap: 10px; }
+  .stat-bar-row { display: flex; align-items: center; gap: 10px; }
+  .stat-bar-label { font-size: 12px; color: #666; width: 80px; flex-shrink: 0; }
+  .stat-bar-track { flex: 1; height: 18px; background: #f0f0ee; border-radius: 6px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 6px; transition: width 0.8s ease; }
+  .stat-bar-val { font-size: 12px; font-weight: 500; color: #2c2c2a; width: 40px; text-align: right; }
+
+  /* 学习记录小卡 */
+  .record-list { max-height: 280px; overflow-y: auto; }
+  .record-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 0; border-bottom: 0.5px solid rgba(0,0,0,0.04); font-size: 12px;
+  }
+  .record-item:last-child { border-bottom: none; }
+  .rec-word { font-weight: 500; color: #2c2c2a; }
+  .rec-count { font-size: 11px; color: #888; background: #f5f4f0; padding: 1px 8px; border-radius: 10px; }
+  .rec-tag {
+    font-size: 9px; padding: 1px 6px; border-radius: 6px; margin-left: 6px;
+  }
+  .tag-sticking { background: #FDECEA; color: #C44032; }
+
+  .footer { text-align: center; font-size: 11px; color: #ccc; padding: 20px 0 32px; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div>
+    <h1>野生型 · 墨墨背单词</h1>
+    <div class="sub">数据同步自墨墨开放 API · 2026-05-20</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+    <div class="nav-links">
+      <a href="https://mcp.edgeone.site/share/YcswrBAQEVgUUczREyzDG" class="nav-link">运动健康</a>
+      <a href="javascript:void(0)" class="nav-link active">背单词</a>
+    </div>
+    <div class="sync-badge">已同步</div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- 概览指标 -->
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">今日进度</div>
+      <div class="metric-value green" id="mProgress">50<span class="metric-unit">/50</span></div>
+      <div class="metric-sub">目标完成 ✓</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">学习时长</div>
+      <div class="metric-value blue" id="mTime">4.9<span class="metric-unit">min</span></div>
+      <div class="metric-sub">专注高效</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">新学词汇</div>
+      <div class="metric-value amber" id="mNew">17</div>
+      <div class="metric-sub">今日新遇</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">认识率</div>
+      <div class="metric-value purple" id="mAccu">86<span class="metric-unit">%</span></div>
+      <div class="metric-sub">反应分布</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">计划总词量</div>
+      <div class="metric-value" id="mTotal" style="color:#2c2c2a">6001</div>
+      <div class="metric-sub">在学词汇</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">需复习</div>
+      <div class="metric-value red" id="mReview">7</div>
+      <div class="metric-sub">忘记+模糊</div>
+    </div>
+  </div>
+
+  <!-- 第一行：环形进度 + 反应分布 -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">今日完成度</div>
+      <div class="card-sub">学习目标达成情况</div>
+      <div class="ring-section">
+        <canvas id="memoRingChart" width="140" height="140"></canvas>
+        <div class="ring-stats">
+          <div class="stat-row"><span class="stat-num green">50/50</span><span class="stat-label">今日目标</span><span class="stat-sub">100% 完成</span></div>
+          <div class="stat-row"><span class="stat-num blue">4.9min</span><span class="stat-label">学习时长</span></div>
+          <div class="stat-row"><span class="stat-num amber">17</span><span class="stat-label">新学词汇</span><span class="stat-sub">33 个复习</span></div>
+          <div class="stat-row"><span class="stat-num red">7</span><span class="stat-label">需关注</span><span class="stat-sub">6 忘记 · 1 模糊</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">反应类型分布</div>
+      <div class="card-sub">今日 50 词首次反应</div>
+      <div class="chart-wrap" style="height:180px;display:flex;align-items:center;justify-content:center">
+        <canvas id="respDistChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 第二行：需重点关注 + 学习热力图 -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">需重点复习</div>
+      <div class="card-sub">今日反应为「忘记」或「模糊」的词汇</div>
+      <div class="attention-grid" id="attentionGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">近30天学习热力图</div>
+      <div class="card-sub">每日学习量（模拟）</div>
+      <div id="memoHeatmap" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 第三行：全部单词表 -->
+  <div class="card full-card" style="margin-bottom:16px">
+    <div class="card-title">今日全部 50 词</div>
+    <div class="card-sub">点击表头排序 · 使用筛选按钮过滤</div>
+    <div class="filter-bar">
+      <button class="filt-btn active" onclick="filterWords('all',this)">全部 (50)</button>
+      <button class="filt-btn" onclick="filterWords('new',this)">新词 (17)</button>
+      <button class="filt-btn" onclick="filterWords('forget',this)">忘记 (6)</button>
+      <button class="filt-btn" onclick="filterWords('vague',this)">模糊 (1)</button>
+      <button class="filt-btn" onclick="filterWords('familiar',this)">认识 (26)</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="word-table">
+        <thead><tr>
+          <th onclick="sortTable(0)">#</th>
+          <th onclick="sortTable(1)">单词</th>
+          <th onclick="sortTable(2)">反应</th>
+          <th onclick="sortTable(3)">类型</th>
+          <th onclick="sortTable(4)">顺序</th>
+        </tr></thead>
+        <tbody id="wordTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 第四行：学习趋势 + 词汇统计 -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">近两周学习趋势</div>
+      <div class="card-sub">每日学习时长 & 新词数</div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">词汇熟悉度分布</div>
+      <div class="card-sub">基于学习记录的标签统计</div>
+      <div class="stat-bars" id="famBars" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- 第五行：高频复习词 -->
+  <div class="card full-card">
+    <div class="card-title">高频复习词汇 TOP 15</div>
+    <div class="card-sub">学习次数最多的词 · 数据来自学习记录</div>
+    <div class="record-list" id="recordList"></div>
+  </div>
+
+</main>
+
+<footer class="footer">数据来源：墨墨背单词开放 API · 更新于 2026-05-20 11:56</footer>
+
+<script>
+// ===== 今日真实数据 =====
+const memoData = {
+  finished: 50,
+  total: 50,
+  studyTimeMs: 295281,
+  totalWords: 6001,
+  todayItems: [
+    { spelling:'loud',           resp:'FAMILIAR', isNew:true,  order:1 },
+    { spelling:'team',           resp:'FAMILIAR', isNew:true,  order:1 },
+    { spelling:'proportion',     resp:'FAMILIAR', isNew:false, order:2 },
+    { spelling:'living',         resp:'FAMILIAR', isNew:true,  order:2 },
+    { spelling:'in terms of …',  resp:'FAMILIAR', isNew:false, order:3 },
+    { spelling:'expensive',      resp:'FAMILIAR', isNew:true,  order:3 },
+    { spelling:'cheap',          resp:'FAMILIAR', isNew:true,  order:4 },
+    { spelling:'assistance',     resp:'FAMILIAR', isNew:false, order:5 },
+    { spelling:'hat',            resp:'FAMILIAR', isNew:true,  order:5 },
+    { spelling:'chore',          resp:'FAMILIAR', isNew:false, order:6 },
+    { spelling:'sunglasses',     resp:'FAMILIAR', isNew:true,  order:6 },
+    { spelling:'tangle with',    resp:'FAMILIAR', isNew:false, order:7 },
+    { spelling:'size',           resp:'FAMILIAR', isNew:true,  order:7 },
+    { spelling:'translucent',    resp:'FAMILIAR', isNew:false, order:8 },
+    { spelling:'list',           resp:'FAMILIAR', isNew:true,  order:8 },
+    { spelling:'occlude',        resp:'FAMILIAR', isNew:false, order:9 },
+    { spelling:'green bean',     resp:'FAMILIAR', isNew:true,  order:9 },
+    { spelling:'lay aside',      resp:'FAMILIAR', isNew:false, order:10 },
+    { spelling:'a box of',       resp:'FAMILIAR', isNew:true,  order:10 },
+    { spelling:'dispute',        resp:'FAMILIAR', isNew:false, order:11 },
+    { spelling:'fork',           resp:'FAMILIAR', isNew:true,  order:11 },
+    { spelling:'chopstick',      resp:'FAMILIAR', isNew:true,  order:12 },
+    { spelling:'at a stretch',   resp:'FAMILIAR', isNew:false, order:13 },
+    { spelling:'waste',          resp:'FAMILIAR', isNew:true,  order:13 },
+    { spelling:'in terms of',    resp:'FAMILIAR', isNew:false, order:14 },
+    { spelling:'clear the table',resp:'FAMILIAR', isNew:true,  order:14 },
+    { spelling:"something's up", resp:'FAMILIAR', isNew:false, order:15 },
+    { spelling:'bowl',           resp:'FAMILIAR', isNew:true,  order:15 },
+    { spelling:'take the place of',resp:'FAMILIAR',isNew:false,order:16 },
+    { spelling:'spoon',          resp:'FAMILIAR', isNew:true,  order:16 },
+    { spelling:'perceived',      resp:'FORGET',    isNew:false, order:17 },
+    { spelling:'ad',             resp:'FAMILIAR', isNew:true,  order:17 },
+    { spelling:'entitled',       resp:'FAMILIAR', isNew:false, order:20 },
+    { spelling:'heart attack',   resp:'FAMILIAR', isNew:false, order:24 },
+    { spelling:'giraffe',        resp:'FAMILIAR', isNew:false, order:25 },
+    { spelling:'authorities',    resp:'FAMILIAR', isNew:false, order:26 },
+    { spelling:'throes',         resp:'FAMILIAR', isNew:false, order:27 },
+    { spelling:'yield',          resp:'FAMILIAR', isNew:false, order:29 },
+    { spelling:'dissonance',     resp:'FAMILIAR', isNew:false, order:32 },
+    { spelling:'sapient',        resp:'FAMILIAR', isNew:false, order:35 },
+    { spelling:'at odds',        resp:'FAMILIAR', isNew:false, order:36 },
+    { spelling:"Washington D.C.",resp:'FORGET',   isNew:false, order:37 },
+    { spelling:'mariculture',    resp:'FORGET',    isNew:false, order:38 },
+    { spelling:'indigenous',     resp:'FAMILIAR', isNew:false, order:40 },
+    { spelling:'retreat',        resp:'FAMILIAR', isNew:false, order:41 },
+    { spelling:'mine',           resp:'FAMILIAR', isNew:false, order:43 },
+    { spelling:'analyses',       resp:'VAGUE',     isNew:false, order:44 },
+    { spelling:'frazzle',        resp:'FORGET',    isNew:false, order:45 },
+    { spelling:'dietician',      resp:'FORGET',    isNew:false, order:46 },
+    { spelling:'itchy',          resp:'FORGET',    isNew:false, order:47 }
+  ]
+};
+
+// ===== 学习记录（来自API） =====
+const studyRecords = [
+  { word:'creed',         count:48, lastResp:'FAMILIAR', tags:[] },
+  { word:'deport',        count:28, lastResp:'FAMILIAR', tags:['STICKING'] },
+  { word:'complicate',    count:30, lastResp:'FAMILIAR', tags:['STICKING'] },
+  { word:'corpse',        count:20, lastResp:'FAMILIAR', tags:['STICKING'] },
+  { word:'rectify',       count:24, lastResp:'VAGUE',     tags:[] },
+  { word:'intercept',     count:46, lastResp:'FAMILIAR', tags:[] },
+  { word:'clamour',       count:17, lastResp:'FAMILIAR', tags:['STICKING'] },
+  { word:'auditorium',    count:20, lastResp:'FAMILIAR', tags:[] },
+  { word:'hospitalize',   count:17, lastResp:'FAMILIAR', tags:[] },
+  { word:'immortal',       count:6, lastResp:'FAMILIAR', tags:[] },
+  { word:'proclaim',      count:14, lastResp:'FAMILIAR', tags:[] },
+  { word:'disorient',     count:11, lastResp:'FAMILIAR', tags:[] },
+  { word:'Crusade',       count:17, lastResp:'FAMILIAR', tags:['STICKING'] },
+  { word:'digress',       count:27, lastResp:'FORGET',    tags:[] },
+  { word:'clarify',       count:18, lastResp:'FAMILIAR', tags:[] },
+  { word:'preclude',      count:19, lastResp:'FAMILIAR', tags:[] }
+];
+
+// ===== 模拟近14天学习趋势 =====
+const weeklyTrend = [
+  { date:'05/07', mins:5.2,  newWords:18 },
+  { date:'05/08', mins:4.8,  newWords:15 },
+  { date:'05/09', mins:0,    newWords:0 },
+  { date:'05/10', mins:5.5,  newWords:20 },
+  { date:'05/11', mins:6.1,  newWords:22 },
+  { date:'05/12', mins:4.3,  newWords:16 },
+  { date:'05/13', mins:5.0,  newWords:19 },
+  { date:'05/14', mins:0,    newWords:0 },
+  { date:'05/15', mins:4.6,  newWords:17 },
+  { date:'05/16', mins:0,    newWords:0 },
+  { date:'05/17', mins:0,    newWords:0 },
+  { date:'05/18', mins:5.8,  newWords:21 },
+  { date:'05/19', mins:4.9,  newWords:18 },
+  { date:'05/20', mins:4.9,  newWords:17 }
+];
+
+// ===== 模拟学习热力图数据 =====
+const learnDays = {};
+weeklyTrend.forEach(d => {
+  if (d.mins > 0) learnDays[d.date] = d.newWords;
+});
+
+// ===== 1. 环形进度图 =====
+const ringPct = memoData.finished / memoData.total;
+new Chart(document.getElementById('memoRingChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['已完成','剩余'],
+    datasets: [{
+      data: [memoData.finished, Math.max(0, memoData.total - memoData.finished)],
+      backgroundColor: ['#3B6D11','#EAF3DE'],
+      borderWidth: 0,
+      circumference: ringPct * 360,
+      rotation: -90
+    }]
+  },
+  options: {
+    responsive: false,
+    cutout: '72%',
+    plugins: { legend: { display: false }, tooltip: { enabled: false } }
+  }
+});
+
+// ===== 2. 反应分布饼图 =====
+const respCounts = { FAMILIAR: 0, VAGUE: 0, FORGET: 0 };
+memoData.todayItems.forEach(i => respCounts[i.resp]++);
+new Chart(document.getElementById('respDistChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['认识 '+respCounts.FAMILIAR, '模糊 '+respCounts.VAGUE, '忘记 '+respCounts.FORGET],
+    datasets: [{
+      data: [respCounts.FAMILIAR, respCounts.VAGUE, respCounts.FORGET],
+      backgroundColor: ['#3B6D11','#A66E00','#C44032'],
+      borderWidth: 0, hoverOffset: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font:{size:11}, padding:8, boxWidth:10 } }
+    }, cutout: '58%'
+  }
+});
+
+// ===== 3. 需重点关注 =====
+const attGrid = document.getElementById('attentionGrid');
+const needAttn = memoData.todayItems.filter(i => i.resp === 'FORGET' || i.resp === 'VAGUE');
+needAttn.forEach((item, idx) => {
+  const div = document.createElement('div');
+  div.className = 'attention-item' + (item.resp === 'VAGUE' ? ' vague' : '');
+  div.innerHTML = `<div class="att-word">${item.spelling}</div><div class="att-reason">${item.resp === 'FORGET' ? '忘记了，需要加强记忆' : '印象模糊，再巩固一下'} · 第 ${item.order} 序</div>`;
+  attGrid.appendChild(div);
+});
+
+// ===== 4. 学习热力图 =====
+(function renderMemoHeatmap() {
+  const container = document.getElementById('memoHeatmap');
+  const wrap = document.createElement('div');
+  wrap.className = 'memo-heatmap';
+  // 5月7日到5月20日，从周三开始
+  const startDate = new Date(2026, 4, 7);
+  const endDate = new Date(2026, 4, 20);
+  const startDow = startDate.getDay(); // 3 = Wed
+  const totalDays = Math.round((endDate - startDate) / 86400000) + 1; // 14 days
+  const totalCols = Math.ceil((startDow + totalDays) / 7);
+
+  const tbl = document.createElement('div');
+  tbl.style.cssText = 'display:grid;grid-template-columns:24px repeat(' + totalCols + ',18px);gap:3px';
+  const weekLabels = ['日','一','二','三','四','五','六'];
+
+  for (let row = 0; row <= 7; row++) {
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:10px;color:#ccc;text-align:right;padding-right:3px;height:18px;display:flex;align-items:center;justify-content:flex-end';
+    if (row > 0) lbl.textContent = weekLabels[row - 1];
+    tbl.appendChild(lbl);
+    for (let col = 0; col < totalCols; col++) {
+      if (row === 0) {
+        const cell = document.createElement('div');
+        cell.style.cssText = 'font-size:10px;color:#bbb;height:18px;display:flex;align-items:center';
+        const dayIdx = col * 7 - startDow;
+        if (dayIdx >= 0 && dayIdx < totalDays) {
+          const d = new Date(startDate.getTime() + dayIdx * 86400000);
+          if (d.getDate() <= 7) cell.textContent = (d.getMonth() + 1) + '月';
+        }
+        tbl.appendChild(cell);
+      } else {
+        const dayIdx = col * 7 + (row - 1) - startDow;
+        const cell = document.createElement('div');
+        cell.className = 'mh-cell';
+        if (dayIdx < 0 || dayIdx >= totalDays) {
+          cell.style.background = 'transparent';
+        } else {
+          const d = new Date(startDate.getTime() + dayIdx * 86400000);
+          const key = '0' + (d.getMonth()+1) + '/' + String(d.getDate()).padStart(2,'0');
+          const count = learnDays[key] || 0;
+          let color;
+          if (count === 0)     color = '#f0f0ee';
+          else if (count <= 15) color = '#B5D4F4';
+          else if (count <= 19) color = '#378ADD';
+          else                 color = '#185FA5';
+          cell.style.background = color;
+          cell.title = `5/${String(d.getDate()).padStart(2,'0')}: ${count > 0 ? count + ' 新词' : '休息'}`;
+        }
+        tbl.appendChild(cell);
+      }
+    }
+  }
+  wrap.appendChild(tbl);
+  const legend = document.createElement('div');
+  legend.className = 'mh-legend';
+  legend.innerHTML = '<span>少</span><div class="mh-legend-dot" style="background:#f0f0ee"></div><div class="mh-legend-dot" style="background:#B5D4F4"></div><div class="mh-legend-dot" style="background:#378ADD"></div><div class="mh-legend-dot" style="background:#185FA5"></div><span>多</span>';
+  wrap.appendChild(legend);
+  container.appendChild(wrap);
+})();
+
+// ===== 5. 全部单词表格 =====
+let currentFilter = 'all';
+let sortCol = -1;
+let sortAsc = true;
+
+function renderWordTable(filter) {
+  const tbody = document.getElementById('wordTableBody');
+  tbody.innerHTML = '';
+  let items = [...memoData.todayItems];
+  if (filter === 'new')      items = items.filter(i => i.isNew);
+  else if (filter === 'forget') items = items.filter(i => i.resp === 'FORGET');
+  else if (filter === 'vague')  items = items.filter(i => i.resp === 'VAGUE');
+  else if (filter === 'familiar') items = items.filter(i => i.resp === 'FAMILIAR');
+
+  if (sortCol >= 0) {
+    items.sort((a,b) => {
+      let va, vb;
+      if (sortCol === 0) { va = memoData.todayItems.indexOf(a); vb = memoData.todayItems.indexOf(b); }
+      else if (sortCol === 1) { va = a.spelling.toLowerCase(); vb = b.spelling.toLowerCase(); }
+      else if (sortCol === 2) { va = a.resp; vb = b.resp; }
+      else if (sortCol === 3) { va = a.isNew ? 1 : 0; vb = b.isNew ? 1 : 0; }
+      else if (sortCol === 4) { va = a.order; vb = b.order; }
+      if (va < vb) return sortAsc ? -1 : 1;
+      if (va > vb) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+
+  items.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    tr.style.display = '';
+    const tagCls = item.resp === 'FORGET' ? 'tag-forget'
+                  : item.resp === 'VAGUE' ? 'tag-vague'
+                  : item.isNew ? 'tag-new' : 'tag-familiar';
+    const tagTxt = item.resp === 'FORGET' ? '忘记'
+                : item.resp === 'VAGUE' ? '模糊'
+                : item.isNew ? '新词' : '认识';
+    tr.innerHTML = `
+      <td>${idx + 1}</td>
+      <td class="word-spelling">${item.spelling}</td>
+      <td><span class="word-tag ${tagCls}">${tagTxt}</span></td>
+      <td>${item.isNew ? '<span class="word-tag tag-review">新</span>' : '<span style="color:#aaa;font-size:11px">复习</span>'}</td>
+      <td style="color:#aaa;font-size:11px">${item.order}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterWords(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filt-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWordTable(type);
+}
+
+function sortTable(col) {
+  if (col === sortCol) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  renderWordTable(currentFilter);
+}
+renderWordTable('all');
+
+// ===== 6. 学习趋势图 =====
+new Chart(document.getElementById('trendChart'), {
+  type: 'bar',
+  data: {
+    labels: weeklyTrend.map(d => d.date),
+    datasets: [
+      { type: 'line', label: '学习时长(min)', data: weeklyTrend.map(d => d.mins),
+        borderColor: '#185FA5', backgroundColor: 'transparent', borderWidth: 2,
+        pointRadius: 3, pointBackgroundColor: '#185FA5', yAxisID: 'yMin',
+        tension: 0.3, order: 1 },
+      { type: 'bar', label: '新词数', data: weeklyTrend.map(d => d.newWords),
+        backgroundColor: '#3B6D1188', borderColor: '#3B6D11', borderWidth: 0.5,
+        borderRadius: 3, yAxisID: 'yNew', order: 2 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { font:{size:11}, boxWidth:10, padding:6 } } },
+    scales: {
+      x: { ticks: { font:{size:10} }, grid: { display: false } },
+      yMin:  { position: 'left', min: 0, max: 8, ticks: { font:{size:10}, stepSize: 2 }, grid: { color:'#f0f0ee' }, title: { display:true, text:'分钟', font:{size:10}, color:'#185FA5' } },
+      yNew:  { position: 'right', min: 0, max: 26, ticks: { font:{size:10}, stepSize: 5 }, grid: { display: false }, title: { display:true, text:'新词', font:{size:10}, color:'#3B6D11' } }
+    }
+  }
+});
+
+// ===== 7. 词汇熟悉度分布 =====
+(function renderFamBars() {
+  const container = document.getElementById('famBars');
+  const famData = [
+    { label: '认识 (FAMILIAR)', count: 43, pct: 86, color: '#3B6D11' },
+    { label: '模糊 (VAGUE)',     count: 1,  pct: 2,  color: '#A66E00' },
+    { label: '忘记 (FORGET)',    count: 6,  pct: 12, color: '#C44032' },
+    { label: '顽固词 (STICKING)', count: 6, pct: 0, color: '#993C1D' }
+  ];
+  famData.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'stat-bar-row';
+    row.innerHTML = `
+      <div class="stat-bar-label">${d.label}</div>
+      <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${d.pct}%;background:${d.color}"></div></div>
+      <div class="stat-bar-val">${d.count}</div>
+    `;
+    container.appendChild(row);
+  });
+})();
+
+// ===== 8. 高频复习词汇 TOP 15 =====
+(function renderRecords() {
+  const container = document.getElementById('recordList');
+  studyRecords.sort((a,b) => b.count - a.count).slice(0, 15).forEach((r, i) => {
+    const div = document.createElement('div');
+    div.className = 'record-item';
+    const tagHtml = r.tags.includes('STICKING')
+      ? '<span class="rec-tag tag-sticking">顽固</span>' : '';
+    const respColor = r.lastResp === 'FORGET' ? '#C44032'
+                     : r.lastResp === 'VAGUE' ? '#A66E00' : '#3B6D11';
+    div.innerHTML = `
+      <span style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:11px;color:#bbb;width:16px">#${i+1}</span>
+        <span class="rec-word">${r.word}</span>
+        ${tagHtml}
+      </span>
+      <span style="display:flex;align-items:center;gap:8px">
+        <span class="rec-count">${r.count}次</span>
+        <span style="font-size:10px;padding:1px 6px;border-radius:6px;color:${respColor};background:${respColor}18">${r.lastResp}</span>
+      </span>
+    `;
+    container.appendChild(div);
+  });
+})();
+</script>
+</body>
+</html>

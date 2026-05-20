@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>野生型 · 运动健康仪表盘</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    background: #f5f4f0;
+    color: #2c2c2a;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .page-header {
+    background: #fff;
+    border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .page-header h1 { font-size: 16px; font-weight: 500; }
+  .page-header .sub { font-size: 12px; color: #888; margin-top: 2px; }
+  .sync-badge {
+    font-size: 11px;
+    color: #3B6D11;
+    background: #EAF3DE;
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+  /* 页面导航 */
+  .nav-links { display: flex; gap: 6px; align-items: center; }
+  .nav-link {
+    font-size: 12px; padding: 5px 14px; border-radius: 20px;
+    text-decoration: none; color: #888;
+    border: 0.5px solid rgba(0,0,0,0.12); transition: all 0.15s;
+  }
+  .nav-link:hover { background: #f5f4f0; }
+  .nav-link.active { background: #185FA5; color: #fff; border-color: transparent; }
+  .main { max-width: 1100px; margin: 0 auto; padding: 24px 24px; }
+
+  /* 指标卡片区 */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .metric-label { font-size: 11px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-value { font-size: 26px; font-weight: 500; line-height: 1.1; }
+  .metric-unit { font-size: 12px; color: #888; margin-left: 2px; }
+  .metric-sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+  .green { color: #3B6D11; }
+  .blue  { color: #185FA5; }
+  .amber { color: #854F0B; }
+  .purple { color: #534AB7; }
+
+  /* 图表区 */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 760px) { .charts-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 22px;
+    border: 0.5px solid rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #2c2c2a;
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 16px;
+  }
+  .chart-wrap { position: relative; width: 100%; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .tab {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    color: #888;
+    transition: all 0.15s;
+  }
+  .tab.active { background: #E6F1FB; color: #185FA5; border-color: transparent; }
+
+  /* 热力图 */
+  .heatmap-wrap { display: flex; flex-direction: column; gap: 3px; }
+  .heatmap-row { display: flex; gap: 3px; align-items: center; }
+  .heatmap-label { font-size: 10px; color: #bbb; width: 24px; flex-shrink: 0; text-align: right; padding-right: 4px; }
+  .heatmap-cell {
+    width: 18px; height: 18px; border-radius: 3px;
+    cursor: default; transition: opacity 0.1s;
+    flex-shrink: 0;
+  }
+  .heatmap-cell:hover { opacity: 0.75; }
+  .heatmap-legend { display: flex; align-items: center; gap: 3px; margin-top: 8px; font-size: 11px; color: #bbb; justify-content: flex-end; }
+  .heatmap-legend-dot { width: 12px; height: 12px; border-radius: 2px; }
+
+  /* 睡眠阶段图 */
+  .sleep-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .sleep-date { width: 50px; color: #aaa; flex-shrink: 0; font-size: 11px; }
+  .sleep-bar-wrap { flex: 1; height: 14px; background: #f0f0ee; border-radius: 4px; overflow: hidden; display: flex; }
+  .sleep-seg { height: 100%; }
+  .sleep-score { width: 28px; text-align: right; color: #888; font-size: 11px; flex-shrink: 0; }
+
+  /* 底部两列 */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 760px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+  /* 跑步记录表 */
+  .run-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .run-table th { text-align: left; padding: 6px 4px; border-bottom: 0.5px solid rgba(0,0,0,0.08); font-weight: 500; color: #aaa; font-size: 11px; }
+  .run-table td { padding: 7px 4px; border-bottom: 0.5px solid rgba(0,0,0,0.04); color: #444; }
+  .run-table tr:last-child td { border-bottom: none; }
+  .pace-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    background: #E6F1FB;
+    color: #185FA5;
+  }
+
+  .footer { text-align: center; font-size: 11px; color: #ccc; padding: 20px 0 32px; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div>
+    <h1>野生型 · 运动健康仪表盘</h1>
+    <div class="sub">上海 · 178cm / 72kg · 26岁</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+    <div class="nav-links">
+      <a href="javascript:void(0)" class="nav-link active">运动健康</a>
+      <a href="https://mcp.edgeone.site/share/n-231uJfWSAc-u1inWjo2" class="nav-link">背单词</a>
+    </div>
+    <div class="sync-badge">数据同步自 COROS 云端 · 2026-05-20</div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- 指标卡片 -->
+  <div class="metric-grid">
+    <div class="metric-card">
+      <div class="metric-label">VO₂max</div>
+      <div class="metric-value blue">54</div>
+      <div class="metric-sub">跑步等级 78 | 优秀</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">静息心率</div>
+      <div class="metric-value green">43<span class="metric-unit">bpm</span></div>
+      <div class="metric-sub">运动员水平</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">体力恢复</div>
+      <div class="metric-value green">100<span class="metric-unit">%</span></div>
+      <div class="metric-sub">状态良好 · 可正常训练</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">全马预测</div>
+      <div class="metric-value amber">3:52:33</div>
+      <div class="metric-sub">均配 5:28/km</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">半马预测</div>
+      <div class="metric-value amber">1:49:32</div>
+      <div class="metric-sub">均配 5:10/km</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">5km 预测</div>
+      <div class="metric-value amber">23:21</div>
+      <div class="metric-sub">均配 4:40/km</div>
+    </div>
+  </div>
+
+  <!-- 主图表区 -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">配速 / 心率 趋势</div>
+      <div class="card-sub">近19次跑步记录（2026-04 至今）</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchMainChart('pace',this)">配速</button>
+        <button class="tab" onclick="switchMainChart('hr',this)">心率</button>
+        <button class="tab" onclick="switchMainChart('dist',this)">距离</button>
+      </div>
+      <div class="chart-wrap" style="height:240px">
+        <canvas id="mainChart" role="img" aria-label="跑步数据趋势图"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">配速分布</div>
+      <div class="card-sub">各区间占比</div>
+      <div class="chart-wrap" style="height:240px; margin-top:28px">
+        <canvas id="paceDistChart" role="img" aria-label="配速分布饼图"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- 热力图 + 最近记录 -->
+  <div class="bottom-grid">
+    <div class="card">
+      <div class="card-title">训练热力图</div>
+      <div class="card-sub">4月-5月 按跑量着色（km）</div>
+      <div id="heatmap" style="margin-top:8px"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">最近跑步记录</div>
+      <div class="card-sub">近10次户外跑</div>
+      <table class="run-table">
+        <thead><tr>
+          <th>日期</th><th>距离</th><th>配速</th><th>心率</th>
+        </tr></thead>
+        <tbody id="runTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 睡眠数据 -->
+  <div class="charts-grid" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title">睡眠质量趋势</div>
+      <div class="card-sub">近30天睡眠评分 · 每日时长</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="sleepChart" role="img" aria-label="睡眠数据折线图"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">睡眠阶段构成</div>
+      <div class="card-sub">近10天 深睡/浅睡/REM 分布</div>
+      <div style="margin-top:4px" id="sleepStages"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">数据来源：COROS 云端 · 更新于 2026-05-20 11:50</footer>
+
+<script>
+// ===== 真实数据 =====
+const runs = [
+  { date:'05/04', dist:10.04, pace:6.12, hr:156, kcal:843 },
+  { date:'05/05', dist:10.12, pace:5.78, hr:153, kcal:821 },
+  { date:'05/06', dist:11.22, pace:6.22, hr:153, kcal:920 },
+  { date:'05/08', dist:10.73, pace:6.15, hr:151, kcal:851 },
+  { date:'05/10', dist:5.22,  pace:6.27, hr:145, kcal:394 },
+  { date:'05/11a',dist:5.44,  pace:5.93, hr:149, kcal:407 },
+  { date:'05/11b',dist:5.51,  pace:6.25, hr:151, kcal:449 },
+  { date:'05/13', dist:10.11, pace:5.88, hr:153, kcal:790 },
+  { date:'05/15', dist:5.36,  pace:6.02, hr:151, kcal:423 },
+  { date:'05/18', dist:10.59, pace:6.02, hr:154, kcal:853 }
+];
+const allRuns = [
+  { date:'04/04', dist:10.13, pace:5.45, hr:159 },
+  { date:'04/12', dist:21.10, pace:5.17, hr:186 },
+  { date:'04/15', dist:5.61,  pace:6.25, hr:151 },
+  { date:'04/16', dist:10.15, pace:6.35, hr:153 },
+  { date:'04/18', dist:10.83, pace:6.17, hr:155 },
+  { date:'04/20', dist:12.06, pace:6.00, hr:155 },
+  { date:'04/22', dist:10.12, pace:5.93, hr:158 },
+  { date:'04/29', dist:10.17, pace:5.97, hr:159 },
+  { date:'05/03', dist:10.40, pace:6.13, hr:153 },
+  { date:'05/04', dist:10.04, pace:6.12, hr:156 },
+  { date:'05/05', dist:10.12, pace:5.78, hr:153 },
+  { date:'05/06', dist:11.22, pace:6.22, hr:153 },
+  { date:'05/08', dist:10.73, pace:6.15, hr:151 },
+  { date:'05/10', dist:5.22,  pace:6.27, hr:145 },
+  { date:'05/11', dist:5.44,  pace:5.93, hr:149 },
+  { date:'05/11', dist:5.51,  pace:6.25, hr:151 },
+  { date:'05/13', dist:10.11, pace:5.88, hr:153 },
+  { date:'05/15', dist:5.36,  pace:6.02, hr:151 },
+  { date:'05/18', dist:10.59, pace:6.02, hr:154 }
+];
+const sleepDays = [
+  { date:'04/20', score:68,  h:7.07 }, { date:'04/21', score:73,  h:7.33 },
+  { date:'04/23', score:74,  h:5.92 }, { date:'04/24', score:74,  h:6.25 },
+  { date:'04/25', score:86,  h:7.40 }, { date:'04/26', score:71,  h:7.35 },
+  { date:'04/27', score:48,  h:6.77 }, { date:'04/28', score:90,  h:5.55 },
+  { date:'04/29', score:69,  h:6.90 }, { date:'04/30', score:71,  h:6.77 },
+  { date:'05/01', score:34,  h:5.62 }, { date:'05/03', score:76,  h:6.52 },
+  { date:'05/04', score:96,  h:6.57 }, { date:'05/05', score:71,  h:6.90 },
+  { date:'05/06', score:75,  h:6.53 }, { date:'05/08', score:48,  h:5.27 },
+  { date:'05/09', score:93,  h:7.18 }, { date:'05/10', score:53,  h:4.48 },
+  { date:'05/11', score:75,  h:7.63 }, { date:'05/12', score:58,  h:5.30 },
+  { date:'05/13', score:43,  h:6.63 }, { date:'05/14', score:53,  h:5.55 },
+  { date:'05/16', score:72,  h:6.63 }, { date:'05/18', score:94,  h:7.05 },
+  { date:'05/19', score:63,  h:7.10 }
+];
+const sleepStagesData = [
+  { date:'05/10', deep:20, light:52, rem:26, awake:2 },
+  { date:'05/11', deep:15, light:69, rem:13, awake:3 },
+  { date:'05/12', deep:8,  light:61, rem:23, awake:8 },
+  { date:'05/13', deep:12, light:59, rem:14, awake:15 },
+  { date:'05/14', deep:9,  light:56, rem:31, awake:4 },
+  { date:'05/16', deep:13, light:66, rem:19, awake:2 },
+  { date:'05/18', deep:17, light:51, rem:29, awake:3 },
+  { date:'05/19', deep:9,  light:69, rem:19, awake:3 },
+  { date:'05/20', deep:12, light:69, rem:18, awake:1 }
+];
+
+// ===== 主趋势图 =====
+let mainChart;
+function paceLabel(v) {
+  const m = Math.floor(v); const s = Math.round((v - m) * 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function switchMainChart(type, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (mainChart) mainChart.destroy();
+  const cfg = {
+    pace:  { data: allRuns.map(r => r.pace),  color:'#185FA5', label:'配速 (min/km)', yMin:5, yMax:7 },
+    hr:    { data: allRuns.map(r => r.hr),    color:'#993C1D', label:'心率 (bpm)',     yMin:130, yMax:200 },
+    dist:  { data: allRuns.map(r => r.dist),  color:'#3B6D11', label:'距离 (km)',      yMin:0, yMax:25 }
+  }[type];
+  mainChart = new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: {
+      labels: allRuns.map(r => r.date),
+      datasets: [{
+        label: cfg.label, data: cfg.data,
+        borderColor: cfg.color, backgroundColor: cfg.color + '18',
+        borderWidth: 2, pointRadius: 4, pointBackgroundColor: cfg.color,
+        tension: 0.3, fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => type === 'pace' ? ' ' + paceLabel(ctx.parsed.y) : ' ' + ctx.parsed.y.toFixed(1) }
+      }},
+      scales: {
+        x: { ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: false }, grid: { color: '#f0f0ee' } },
+        y: { min: cfg.yMin, max: cfg.yMax, ticks: { font: { size: 10 }, callback: v => type === 'pace' ? paceLabel(v) : v }, grid: { color: '#f0f0ee' } }
+      }
+    }
+  });
+}
+switchMainChart('pace', document.querySelector('.tab.active'));
+
+// ===== 配速分布饼图 =====
+const paceBuckets = { '< 5:30': 0, '5:30–6:00': 0, '6:00–6:30': 0, '> 6:30': 0 };
+allRuns.forEach(r => {
+  if (r.pace < 5.5)      paceBuckets['< 5:30']++;
+  else if (r.pace < 6.0) paceBuckets['5:30–6:00']++;
+  else if (r.pace < 6.5) paceBuckets['6:00–6:30']++;
+  else                   paceBuckets['> 6:30']++;
+});
+new Chart(document.getElementById('paceDistChart'), {
+  type: 'doughnut',
+  data: {
+    labels: Object.keys(paceBuckets),
+    datasets: [{ data: Object.values(paceBuckets), backgroundColor: ['#185FA5','#378ADD','#85B7EB','#B5D4F4'], borderWidth: 0, hoverOffset: 4 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10, boxWidth: 10 } } },
+    cutout: '55%'
+  }
+});
+
+// ===== 睡眠趋势图 =====
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: sleepDays.map(d => d.date),
+    datasets: [
+      { type: 'line', label: '睡眠评分', data: sleepDays.map(d => d.score), borderColor: '#534AB7', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#534AB7', yAxisID: 'yScore', tension: 0.3, order: 1 },
+      { type: 'bar', label: '时长(h)', data: sleepDays.map(d => d.h), backgroundColor: '#85B7EB88', borderColor: '#378ADD', borderWidth: 0.5, borderRadius: 3, yAxisID: 'yHour', order: 2 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 10, padding: 8 } } },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: false }, grid: { display: false } },
+      yScore: { position: 'left', min: 0, max: 100, ticks: { font: { size: 10 }, stepSize: 20 }, grid: { color: '#f0f0ee' }, title: { display: true, text: '评分', font: { size: 10 }, color: '#534AB7' } },
+      yHour:  { position: 'right', min: 0, max: 10, ticks: { font: { size: 10 }, stepSize: 2 }, grid: { display: false }, title: { display: true, text: '小时', font: { size: 10 }, color: '#378ADD' } }
+    }
+  }
+});
+
+// ===== 睡眠阶段条形图 =====
+const stageContainer = document.getElementById('sleepStages');
+sleepStagesData.forEach(d => {
+  const row = document.createElement('div');
+  row.className = 'sleep-row';
+  const total = d.deep + d.light + d.rem + d.awake;
+  row.innerHTML = `
+    <span class="sleep-date">${d.date}</span>
+    <div class="sleep-bar-wrap">
+      <div class="sleep-seg" style="width:${d.deep/total*100}%;background:#185FA5" title="深睡 ${d.deep}%"></div>
+      <div class="sleep-seg" style="width:${d.light/total*100}%;background:#85B7EB" title="浅睡 ${d.light}%"></div>
+      <div class="sleep-seg" style="width:${d.rem/total*100}%;background:#534AB7" title="REM ${d.rem}%"></div>
+      <div class="sleep-seg" style="width:${d.awake/total*100}%;background:#F0997B" title="清醒 ${d.awake}%"></div>
+    </div>
+    <span class="sleep-score">${d.deep}%</span>
+  `;
+  stageContainer.appendChild(row);
+});
+const legend = document.createElement('div');
+legend.style.cssText = 'display:flex;gap:10px;margin-top:10px;font-size:11px;color:#aaa;flex-wrap:wrap';
+legend.innerHTML = `
+  <span><span style="display:inline-block;width:10px;height:10px;background:#185FA5;border-radius:2px;margin-right:3px"></span>深睡</span>
+  <span><span style="display:inline-block;width:10px;height:10px;background:#85B7EB;border-radius:2px;margin-right:3px"></span>浅睡</span>
+  <span><span style="display:inline-block;width:10px;height:10px;background:#534AB7;border-radius:2px;margin-right:3px"></span>REM</span>
+  <span><span style="display:inline-block;width:10px;height:10px;background:#F0997B;border-radius:2px;margin-right:3px"></span>清醒</span>
+  <span style="margin-left:4px;color:#bbb">数字=深睡%</span>
+`;
+stageContainer.appendChild(legend);
+
+// ===== 训练热力图 =====
+const heatmapData = {};
+allRuns.forEach(r => {
+  const key = r.date.replace('/', '-');
+  heatmapData[key] = (heatmapData[key] || 0) + r.dist;
+});
+const hmEl = document.getElementById('heatmap');
+const hmWrap = document.createElement('div');
+hmWrap.className = 'heatmap-wrap';
+const weekLabels = ['日','一','二','三','四','五','六'];
+const startDate = new Date(2026, 3, 1);
+const endDate = new Date(2026, 4, 20);
+const startDow = startDate.getDay();
+const totalDays = Math.round((endDate - startDate) / 86400000) + 1;
+const totalCols = Math.ceil((startDow + totalDays) / 7);
+
+const hmTable = document.createElement('div');
+hmTable.style.cssText = 'display:grid;grid-template-columns:24px repeat(' + totalCols + ',18px);gap:3px';
+for (let row = 0; row <= 7; row++) {
+  const lbl = document.createElement('div');
+  lbl.style.cssText = 'font-size:10px;color:#ccc;text-align:right;padding-right:3px;height:18px;display:flex;align-items:center;justify-content:flex-end';
+  if (row > 0) lbl.textContent = weekLabels[row - 1];
+  hmTable.appendChild(lbl);
+  for (let col = 0; col < totalCols; col++) {
+    if (row === 0) {
+      const cell = document.createElement('div');
+      cell.style.cssText = 'font-size:10px;color:#bbb;height:18px;display:flex;align-items:center';
+      const dayIdx = col * 7 - startDow;
+      const d = new Date(startDate.getTime() + dayIdx * 86400000);
+      if (dayIdx >= 0 && dayIdx < totalDays) {
+        if (d.getDate() <= 7) cell.textContent = (d.getMonth() + 1) + '月';
+      }
+      hmTable.appendChild(cell);
+    } else {
+      const dayIdx = col * 7 + (row - 1) - startDow;
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      if (dayIdx < 0 || dayIdx >= totalDays) {
+        cell.style.background = 'transparent';
+      } else {
+        const d = new Date(startDate.getTime() + dayIdx * 86400000);
+        const mStr = String(d.getMonth() + 1).padStart(2,'0');
+        const dStr = String(d.getDate()).padStart(2,'0');
+        const key = mStr + '-' + dStr;
+        const km = heatmapData[key] || 0;
+        let color;
+        if (km === 0)     color = '#f0f0ee';
+        else if (km < 6)  color = '#B5D4F4';
+        else if (km < 10) color = '#378ADD';
+        else if (km < 15) color = '#185FA5';
+        else              color = '#0C447C';
+        cell.style.background = color;
+        cell.title = `${mStr}/${dStr}: ${km > 0 ? km.toFixed(1) + ' km' : '休息'}`;
+      }
+      hmTable.appendChild(cell);
+    }
+  }
+}
+hmEl.appendChild(hmTable);
+const hmLegend = document.createElement('div');
+hmLegend.className = 'heatmap-legend';
+hmLegend.innerHTML = `<span>少</span>
+  <div class="heatmap-legend-dot" style="background:#f0f0ee"></div>
+  <div class="heatmap-legend-dot" style="background:#B5D4F4"></div>
+  <div class="heatmap-legend-dot" style="background:#378ADD"></div>
+  <div class="heatmap-legend-dot" style="background:#185FA5"></div>
+  <div class="heatmap-legend-dot" style="background:#0C447C"></div>
+  <span>多</span>`;
+hmEl.appendChild(hmLegend);
+
+// ===== 最近跑步记录表 =====
+const tbody = document.getElementById('runTableBody');
+runs.slice().reverse().slice(0, 10).forEach(r => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>5/${r.date.split('/')[1]}</td>
+    <td>${r.dist.toFixed(1)} km</td>
+    <td><span class="pace-chip">${paceLabel(r.pace)}/km</span></td>
+    <td>${r.hr} bpm</td>
+  `;
+  tbody.appendChild(tr);
+});
+</script>
+</body>
+</html>
