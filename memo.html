@@ -220,15 +220,6 @@
     </div>
   </div>
 
-  <!-- 第三行：学习趋势 -->
-  <div class="card full-card" style="margin-bottom:16px">
-    <div class="card-title">近两周学习趋势</div>
-    <div class="card-sub">今日真实时长 · 近期复习记录词数</div>
-    <div class="chart-wrap" style="height:260px">
-      <canvas id="trendChart"></canvas>
-    </div>
-  </div>
-
   <!-- 全部单词表 -->
   <div class="card full-card" style="margin-bottom:16px">
     <div class="card-title">今日全部 50 词</div>
@@ -1517,19 +1508,6 @@ const studyRecords = [
   }
 ];
 
-// ===== 从学习日志生成趋势（自动记录，最多14天） =====
-const studyLog = [{"date":"05/20","mins":4.9,"words":50}];
-function p2(n) { return n < 10 ? '0' + n : '' + n; }
-const weeklyTrend = [];
-const now2 = new Date();
-for (let i = 13; i >= 0; i--) {
-  const d = new Date(now2);
-  d.setDate(d.getDate() - i);
-  const key = p2(d.getMonth()+1) + '/' + p2(d.getDate());
-  const entry = studyLog.find(e => e.date === key);
-  weeklyTrend.push(entry || { date: key, mins: 0, words: 0 });
-}
-
 // ===== 1. 环形进度图 =====
 const ringPct = memoData.finished / memoData.total;
 new Chart(document.getElementById('memoRingChart'), {
@@ -1635,32 +1613,6 @@ function sortTable(col) {
   renderWordTable(currentFilter);
 }
 renderWordTable('all');
-
-// ===== 6. 学习趋势图 =====
-new Chart(document.getElementById('trendChart'), {
-  type: 'bar',
-  data: {
-    labels: weeklyTrend.map(d => d.date),
-    datasets: [
-      { type: 'line', label: '学习时长(min)', data: weeklyTrend.map(d => d.mins),
-        borderColor: '#185FA5', backgroundColor: 'transparent', borderWidth: 2,
-        pointRadius: 3, pointBackgroundColor: '#185FA5', yAxisID: 'yMin',
-        tension: 0.3, order: 1 },
-      { type: 'bar', label: '复习词数', data: weeklyTrend.map(d => d.words),
-        backgroundColor: '#3B6D1188', borderColor: '#3B6D11', borderWidth: 0.5,
-        borderRadius: 3, yAxisID: 'yNew', order: 2 }
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'top', labels: { font:{size:11}, boxWidth:10, padding:6 } } },
-    scales: {
-      x: { ticks: { font:{size:10} }, grid: { display: false } },
-      yMin:  { position: 'left', min: 0, max: 8, ticks: { font:{size:10}, stepSize: 2 }, grid: { color:'#f0f0ee' }, title: { display:true, text:'分钟', font:{size:10}, color:'#185FA5' } },
-      yNew:  { position: 'right', min: 0, max: 26, ticks: { font:{size:10}, stepSize: 5 }, grid: { display: false }, title: { display:true, text:'新词', font:{size:10}, color:'#3B6D11' } }
-    }
-  }
-});
 
 </script>
 </body>
