@@ -342,82 +342,169 @@
 <script>
 // ===== 今日真实数据 =====
 const memoData = {
-  finished: 50,
-  total: 50,
-  studyTimeMs: 295281,
-  totalWords: 6001,
-  todayItems: [
-    { spelling:'loud',           resp:'FAMILIAR', isNew:true,  order:1 },
-    { spelling:'team',           resp:'FAMILIAR', isNew:true,  order:1 },
-    { spelling:'proportion',     resp:'FAMILIAR', isNew:false, order:2 },
-    { spelling:'living',         resp:'FAMILIAR', isNew:true,  order:2 },
-    { spelling:'in terms of …',  resp:'FAMILIAR', isNew:false, order:3 },
-    { spelling:'expensive',      resp:'FAMILIAR', isNew:true,  order:3 },
-    { spelling:'cheap',          resp:'FAMILIAR', isNew:true,  order:4 },
-    { spelling:'assistance',     resp:'FAMILIAR', isNew:false, order:5 },
-    { spelling:'hat',            resp:'FAMILIAR', isNew:true,  order:5 },
-    { spelling:'chore',          resp:'FAMILIAR', isNew:false, order:6 },
-    { spelling:'sunglasses',     resp:'FAMILIAR', isNew:true,  order:6 },
-    { spelling:'tangle with',    resp:'FAMILIAR', isNew:false, order:7 },
-    { spelling:'size',           resp:'FAMILIAR', isNew:true,  order:7 },
-    { spelling:'translucent',    resp:'FAMILIAR', isNew:false, order:8 },
-    { spelling:'list',           resp:'FAMILIAR', isNew:true,  order:8 },
-    { spelling:'occlude',        resp:'FAMILIAR', isNew:false, order:9 },
-    { spelling:'green bean',     resp:'FAMILIAR', isNew:true,  order:9 },
-    { spelling:'lay aside',      resp:'FAMILIAR', isNew:false, order:10 },
-    { spelling:'a box of',       resp:'FAMILIAR', isNew:true,  order:10 },
-    { spelling:'dispute',        resp:'FAMILIAR', isNew:false, order:11 },
-    { spelling:'fork',           resp:'FAMILIAR', isNew:true,  order:11 },
-    { spelling:'chopstick',      resp:'FAMILIAR', isNew:true,  order:12 },
-    { spelling:'at a stretch',   resp:'FAMILIAR', isNew:false, order:13 },
-    { spelling:'waste',          resp:'FAMILIAR', isNew:true,  order:13 },
-    { spelling:'in terms of',    resp:'FAMILIAR', isNew:false, order:14 },
-    { spelling:'clear the table',resp:'FAMILIAR', isNew:true,  order:14 },
-    { spelling:"something's up", resp:'FAMILIAR', isNew:false, order:15 },
-    { spelling:'bowl',           resp:'FAMILIAR', isNew:true,  order:15 },
-    { spelling:'take the place of',resp:'FAMILIAR',isNew:false,order:16 },
-    { spelling:'spoon',          resp:'FAMILIAR', isNew:true,  order:16 },
-    { spelling:'perceived',      resp:'FORGET',    isNew:false, order:17 },
-    { spelling:'ad',             resp:'FAMILIAR', isNew:true,  order:17 },
-    { spelling:'entitled',       resp:'FAMILIAR', isNew:false, order:20 },
-    { spelling:'heart attack',   resp:'FAMILIAR', isNew:false, order:24 },
-    { spelling:'giraffe',        resp:'FAMILIAR', isNew:false, order:25 },
-    { spelling:'authorities',    resp:'FAMILIAR', isNew:false, order:26 },
-    { spelling:'throes',         resp:'FAMILIAR', isNew:false, order:27 },
-    { spelling:'yield',          resp:'FAMILIAR', isNew:false, order:29 },
-    { spelling:'dissonance',     resp:'FAMILIAR', isNew:false, order:32 },
-    { spelling:'sapient',        resp:'FAMILIAR', isNew:false, order:35 },
-    { spelling:'at odds',        resp:'FAMILIAR', isNew:false, order:36 },
-    { spelling:"Washington D.C.",resp:'FORGET',   isNew:false, order:37 },
-    { spelling:'mariculture',    resp:'FORGET',    isNew:false, order:38 },
-    { spelling:'indigenous',     resp:'FAMILIAR', isNew:false, order:40 },
-    { spelling:'retreat',        resp:'FAMILIAR', isNew:false, order:41 },
-    { spelling:'mine',           resp:'FAMILIAR', isNew:false, order:43 },
-    { spelling:'analyses',       resp:'VAGUE',     isNew:false, order:44 },
-    { spelling:'frazzle',        resp:'FORGET',    isNew:false, order:45 },
-    { spelling:'dietician',      resp:'FORGET',    isNew:false, order:46 },
-    { spelling:'itchy',          resp:'FORGET',    isNew:false, order:47 }
-  ]
+  finished: 50, total: 50,
+  studyTimeMs: 295281, totalWords: 6001,
+  todayItems: [{"spelling":"loud","response":"FAMILIAR","isNew":true,"order":1},{"spelling":"team","response":"FAMILIAR","isNew":true,"order":1},{"spelling":"proportion","response":"FAMILIAR","isNew":false,"order":2},{"spelling":"living","response":"FAMILIAR","isNew":true,"order":2},{"spelling":"in terms of ...","response":"FAMILIAR","isNew":false,"order":3},{"spelling":"expensive","response":"FAMILIAR","isNew":true,"order":3},{"spelling":"cheap","response":"FAMILIAR","isNew":true,"order":4},{"spelling":"assistance","response":"FAMILIAR","isNew":false,"order":5},{"spelling":"hat","response":"FAMILIAR","isNew":true,"order":5},{"spelling":"chore","response":"FAMILIAR","isNew":false,"order":6},{"spelling":"sunglasses","response":"FAMILIAR","isNew":true,"order":6},{"spelling":"tangle with","response":"FAMILIAR","isNew":false,"order":7},{"spelling":"size","response":"FAMILIAR","isNew":true,"order":7},{"spelling":"translucent","response":"FAMILIAR","isNew":false,"order":8},{"spelling":"list","response":"FAMILIAR","isNew":true,"order":8},{"spelling":"occlude","response":"FAMILIAR","isNew":false,"order":9},{"spelling":"green bean","response":"FAMILIAR","isNew":true,"order":9},{"spelling":"lay aside","response":"FAMILIAR","isNew":false,"order":10},{"spelling":"a box of","response":"FAMILIAR","isNew":true,"order":10},{"spelling":"dispute","response":"FAMILIAR","isNew":false,"order":11},{"spelling":"fork","response":"FAMILIAR","isNew":true,"order":11},{"spelling":"chopstick","response":"FAMILIAR","isNew":true,"order":12},{"spelling":"at a stretch","response":"FAMILIAR","isNew":false,"order":13},{"spelling":"waste","response":"FAMILIAR","isNew":true,"order":13},{"spelling":"in terms of","response":"FAMILIAR","isNew":false,"order":14},{"spelling":"clear the table","response":"FAMILIAR","isNew":true,"order":14},{"spelling":"something's up","response":"FAMILIAR","isNew":false,"order":15},{"spelling":"bowl","response":"FAMILIAR","isNew":true,"order":15},{"spelling":"take the place of","response":"FAMILIAR","isNew":false,"order":16},{"spelling":"spoon","response":"FAMILIAR","isNew":true,"order":16},{"spelling":"perceived","response":"FORGET","isNew":false,"order":17},{"spelling":"ad","response":"FAMILIAR","isNew":true,"order":17},{"spelling":"entitled","response":"FAMILIAR","isNew":false,"order":20},{"spelling":"heart attack","response":"FAMILIAR","isNew":false,"order":24},{"spelling":"giraffe","response":"FAMILIAR","isNew":false,"order":25},{"spelling":"authorities","response":"FAMILIAR","isNew":false,"order":26},{"spelling":"throes","response":"FAMILIAR","isNew":false,"order":27},{"spelling":"yield","response":"FAMILIAR","isNew":false,"order":29},{"spelling":"dissonance","response":"FAMILIAR","isNew":false,"order":32},{"spelling":"sapient","response":"FAMILIAR","isNew":false,"order":35},{"spelling":"at odds","response":"FAMILIAR","isNew":false,"order":36},{"spelling":"Washington D.C.","response":"FORGET","isNew":false,"order":37},{"spelling":"mariculture","response":"FORGET","isNew":false,"order":38},{"spelling":"indigenous","response":"FAMILIAR","isNew":false,"order":40},{"spelling":"retreat","response":"FAMILIAR","isNew":false,"order":41},{"spelling":"mine","response":"FAMILIAR","isNew":false,"order":43},{"spelling":"analyses","response":"VAGUE","isNew":false,"order":44},{"spelling":"frazzle","response":"FORGET","isNew":false,"order":45},{"spelling":"dietician","response":"FORGET","isNew":false,"order":46},{"spelling":"itchy","response":"FORGET","isNew":false,"order":47}]
 };
 
 // ===== 学习记录（来自API） =====
 const studyRecords = [
-  { word:'creed',         count:48, lastResp:'FAMILIAR', tags:[] },
-  { word:'deport',        count:28, lastResp:'FAMILIAR', tags:['STICKING'] },
-  { word:'complicate',    count:30, lastResp:'FAMILIAR', tags:['STICKING'] },
-  { word:'corpse',        count:20, lastResp:'FAMILIAR', tags:['STICKING'] },
-  { word:'rectify',       count:24, lastResp:'VAGUE',     tags:[] },
-  { word:'intercept',     count:46, lastResp:'FAMILIAR', tags:[] },
-  { word:'clamour',       count:17, lastResp:'FAMILIAR', tags:['STICKING'] },
-  { word:'auditorium',    count:20, lastResp:'FAMILIAR', tags:[] },
-  { word:'hospitalize',   count:17, lastResp:'FAMILIAR', tags:[] },
-  { word:'immortal',       count:6, lastResp:'FAMILIAR', tags:[] },
-  { word:'proclaim',      count:14, lastResp:'FAMILIAR', tags:[] },
-  { word:'disorient',     count:11, lastResp:'FAMILIAR', tags:[] },
-  { word:'Crusade',       count:17, lastResp:'FAMILIAR', tags:['STICKING'] },
-  { word:'digress',       count:27, lastResp:'FORGET',    tags:[] },
-  { word:'clarify',       count:18, lastResp:'FAMILIAR', tags:[] },
-  { word:'preclude',      count:19, lastResp:'FAMILIAR', tags:[] }
+  {
+    "count": 17,
+    "lastResp": "2026-02-11",
+    "tags": []
+  },
+  {
+    "count": 7,
+    "lastResp": "2026-02-19",
+    "tags": []
+  },
+  {
+    "count": 24,
+    "lastResp": "2026-02-16",
+    "tags": []
+  },
+  {
+    "count": 5,
+    "lastResp": "2026-01-06",
+    "tags": []
+  },
+  {
+    "count": 4,
+    "lastResp": "2025-11-30",
+    "tags": []
+  },
+  {
+    "count": 46,
+    "lastResp": "2026-02-14",
+    "tags": [
+      "STICKING"
+    ]
+  },
+  {
+    "count": 5,
+    "lastResp": "2026-03-15",
+    "tags": []
+  },
+  {
+    "count": 6,
+    "lastResp": "2026-04-14",
+    "tags": []
+  },
+  {
+    "count": 8,
+    "lastResp": "2026-05-11",
+    "tags": []
+  },
+  {
+    "count": 8,
+    "lastResp": "2026-05-18",
+    "tags": []
+  },
+  {
+    "count": 19,
+    "lastResp": "2026-03-02",
+    "tags": []
+  },
+  {
+    "count": 18,
+    "lastResp": "2026-02-15",
+    "tags": []
+  },
+  {
+    "count": 6,
+    "lastResp": "2026-03-17",
+    "tags": []
+  },
+  {
+    "count": 8,
+    "lastResp": "2026-05-07",
+    "tags": []
+  },
+  {
+    "count": 5,
+    "lastResp": "2026-01-28",
+    "tags": []
+  },
+  {
+    "count": 17,
+    "lastResp": "2026-02-10",
+    "tags": [
+      "STICKING"
+    ]
+  },
+  {
+    "count": 20,
+    "lastResp": "2026-02-18",
+    "tags": []
+  },
+  {
+    "count": 4,
+    "lastResp": "2026-04-03",
+    "tags": []
+  },
+  {
+    "count": 6,
+    "lastResp": "2026-01-07",
+    "tags": []
+  },
+  {
+    "count": 48,
+    "lastResp": "2026-02-17",
+    "tags": []
+  },
+  {
+    "count": 20,
+    "lastResp": "2026-02-05",
+    "tags": [
+      "STICKING"
+    ]
+  },
+  {
+    "count": 14,
+    "lastResp": "2026-04-15",
+    "tags": []
+  },
+  {
+    "count": 6,
+    "lastResp": "2026-03-04",
+    "tags": []
+  },
+  {
+    "count": 3,
+    "lastResp": "2026-01-15",
+    "tags": []
+  },
+  {
+    "count": 5,
+    "lastResp": "2026-03-25",
+    "tags": []
+  },
+  {
+    "count": 5,
+    "lastResp": "2026-05-05",
+    "tags": []
+  },
+  {
+    "count": 6,
+    "lastResp": "2026-01-05",
+    "tags": []
+  },
+  {
+    "count": 5,
+    "lastResp": "2026-02-18",
+    "tags": []
+  },
+  {
+    "count": 3,
+    "lastResp": "2026-01-04",
+    "tags": []
+  },
+  {
+    "count": 9,
+    "lastResp": "2026-02-14",
+    "tags": []
+  }
 ];
 
 // ===== 模拟近14天学习趋势 =====
