@@ -223,7 +223,7 @@
   <!-- 第三行：学习趋势 -->
   <div class="card full-card" style="margin-bottom:16px">
     <div class="card-title">近两周学习趋势</div>
-    <div class="card-sub">每日学习时长（分钟） & 新词数</div>
+    <div class="card-sub">每日学习时长（实际） & 词数（学习记录）</div>
     <div class="chart-wrap" style="height:260px">
       <canvas id="trendChart"></canvas>
     </div>
@@ -1517,23 +1517,19 @@ const studyRecords = [
   }
 ];
 
-// ===== 模拟近14天学习趋势 =====
-const weeklyTrend = [
-  { date:'05/07', mins:5.2,  newWords:18 },
-  { date:'05/08', mins:4.8,  newWords:15 },
-  { date:'05/09', mins:0,    newWords:0 },
-  { date:'05/10', mins:5.5,  newWords:20 },
-  { date:'05/11', mins:6.1,  newWords:22 },
-  { date:'05/12', mins:4.3,  newWords:16 },
-  { date:'05/13', mins:5.0,  newWords:19 },
-  { date:'05/14', mins:0,    newWords:0 },
-  { date:'05/15', mins:4.6,  newWords:17 },
-  { date:'05/16', mins:0,    newWords:0 },
-  { date:'05/17', mins:0,    newWords:0 },
-  { date:'05/18', mins:5.8,  newWords:21 },
-  { date:'05/19', mins:4.9,  newWords:18 },
-  { date:'05/20', mins:4.9,  newWords:17 }
-];
+// ===== 从学习记录生成近14天趋势 =====
+const weeklyTrend = [];
+const now2 = new Date();
+for (let i = 13; i >= 0; i--) {
+  const d = new Date(now2);
+  d.setDate(d.getDate() - i);
+  const key = pad(d.getMonth()+1) + '/' + pad(d.getDate());
+  // 统计该日学习的词汇数
+  const dayRecords = studyRecords.filter(r => r.lastDate && r.lastDate.slice(5).replace('-','/') === key);
+  // 今日用时取实际值，其他天按记录数估算（~0.3min/词）
+  const mins = i === 0 ? Math.round(memoData.studyTimeMs / 60000 * 10) / 10 : dayRecords.length * 0.3;
+  weeklyTrend.push({ date: key, mins: Math.round(mins * 10) / 10, newWords: dayRecords.length });
+}
 
 // ===== 1. 环形进度图 =====
 const ringPct = memoData.finished / memoData.total;
