@@ -594,10 +594,10 @@ new Chart(document.getElementById('trendChart'), {
 (function renderFamBars() {
   const container = document.getElementById('famBars');
   const famData = [
-    { label: '认识 (FAMILIAR)', count: 43, pct: 86, color: '#3B6D11' },
-    { label: '模糊 (VAGUE)',     count: 1,  pct: 2,  color: '#A66E00' },
-    { label: '忘记 (FORGET)',    count: 6,  pct: 12, color: '#C44032' },
-    { label: '顽固词 (STICKING)', count: 6, pct: 0, color: '#993C1D' }
+    { label: '认识', count: 43, pct: 86, color: '#3B6D11' },
+    { label: '模糊', count: 1,  pct: 2,  color: '#A66E00' },
+    { label: '忘记', count: 6,  pct: 12, color: '#C44032' },
+    { label: '顽固词', count: 6, pct: 0, color: '#993C1D' }
   ];
   famData.forEach(d => {
     const row = document.createElement('div');
