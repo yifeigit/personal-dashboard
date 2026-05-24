@@ -142,12 +142,6 @@
   .filt-btn:hover:not(.active) { background: #f0f0ee; }
 
   .footer { text-align: center; font-size: 11px; color: #ccc; padding: 20px 0 32px; }
-
-  /* 词汇水平 */
-  .metric-row { display: flex; gap: 12px; flex-wrap: wrap; }
-  .metric-box { flex: 1; min-width: 120px; background: #fafaf8; border-radius: 10px; padding: 14px; text-align: center; }
-  .metric-box .num { font-size: 22px; font-weight: 600; color: #2c2c2a; }
-  .metric-box .lbl { font-size: 11px; color: #888; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -224,13 +218,6 @@
         <canvas id="respDistChart"></canvas>
       </div>
     </div>
-  </div>
-
-  <!-- 整体词汇水平 -->
-  <div class="card full-card" style="margin-bottom:16px">
-    <div class="card-title">个人词汇水平</div>
-    <div class="card-sub">基于全部学习数据统计</div>
-    <div class="metric-row" id="vocabStats"></div>
   </div>
 
   <!-- 全部单词表 -->
@@ -1563,35 +1550,6 @@ new Chart(document.getElementById('respDistChart'), {
     }, cutout: '58%'
   }
 });
-
-// ===== 3. 个人词汇水平 =====
-(function renderVocabStats() {
-  const container = document.getElementById('vocabStats');
-  if (!container) return;
-  let familiar=0, vague=0, forget=0, sticking=0;
-  let totalStudies=0, maxStudies=0;
-  studyRecords.forEach(r => {
-    if (r.tags.includes('STICKING')) sticking++;
-    else if (r.lastResp === 'FORGET') forget++;
-    else if (r.lastResp === 'VAGUE') vague++;
-    else familiar++;
-    totalStudies += r.count;
-    if (r.count > maxStudies) maxStudies = r.count;
-  });
-  const sampled = studyRecords.length;
-  const data = [
-    { num: memoData.totalWords.toLocaleString(), lbl: '总词汇量' },
-    { num: Math.round(familiar / sampled * 100) + '%', lbl: '已掌握 · ' + sampled + '样本' },
-    { num: Math.round(totalStudies / sampled), lbl: '平均复习次数', sub: '最多 ' + maxStudies + ' 次' },
-    { num: sticking, lbl: '顽固词', sub: '需加强记忆' }
-  ];
-  data.forEach(d => {
-    const box = document.createElement('div');
-    box.className = 'metric-box';
-    box.innerHTML = '<div class="num">' + d.num + '</div><div class="lbl">' + d.lbl + (d.sub ? '<br><span style="font-size:10px;color:#bbb">' + d.sub + '</span>' : '') + '</div>';
-    container.appendChild(box);
-  });
-})();
 
 // ===== 5. 全部单词表格 =====
 let currentFilter = 'all';
