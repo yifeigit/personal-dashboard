@@ -224,13 +224,7 @@
   <div class="card full-card" style="margin-bottom:16px">
     <div class="card-title">今日全部 50 词</div>
     <div class="card-sub">点击表头排序 · 使用筛选按钮过滤</div>
-    <div class="filter-bar">
-      <button class="filt-btn active" onclick="filterWords('all',this)">全部 (50)</button>
-      <button class="filt-btn" onclick="filterWords('new',this)">新词 (17)</button>
-      <button class="filt-btn" onclick="filterWords('forget',this)">忘记 (6)</button>
-      <button class="filt-btn" onclick="filterWords('vague',this)">模糊 (1)</button>
-      <button class="filt-btn" onclick="filterWords('familiar',this)">认识 (26)</button>
-    </div>
+    <div class="filter-bar" id="filterBar"></div>
     <div style="overflow-x:auto">
       <table class="word-table">
         <thead><tr>
@@ -1550,6 +1544,32 @@ new Chart(document.getElementById('respDistChart'), {
     }, cutout: '58%'
   }
 });
+
+// ===== 3. 动态筛选按钮 =====
+(function setupFilterBar() {
+  const bar = document.getElementById('filterBar');
+  if (!bar) return;
+  const counts = [0, 0, 0]; // FAMILIAR, FORGET, VAGUE
+  let nNew = 0;
+  memoData.todayItems.forEach(i => {
+    if (i.isNew) nNew++;
+    if (i.response >= 0 && i.response <= 2) counts[i.response]++;
+  });
+  const btns = [
+    { type: 'all',  label: '全部',         count: memoData.todayItems.length },
+    { type: 'new',     label: '新词',         count: nNew },
+    { type: 'forget',  label: '忘记',         count: counts[1] },
+    { type: 'vague',   label: '模糊',         count: counts[2] },
+    { type: 'familiar',label: '认识',         count: counts[0] }
+  ];
+  btns.forEach((b, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'filt-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = b.label + ' (' + b.count + ')';
+    btn.onclick = function() { filterWords(b.type, btn); };
+    bar.appendChild(btn);
+  });
+})();
 
 // ===== 5. 全部单词表格 =====
 let currentFilter = 'all';
