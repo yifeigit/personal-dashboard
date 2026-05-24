@@ -207,6 +207,11 @@
       <div class="metric-value amber">23:21</div>
       <div class="metric-sub">均配 4:40/km</div>
     </div>
+    <div class="metric-card" id="lastRunCard">
+      <div class="metric-label">最近一次运动</div>
+      <div class="metric-value purple" id="lastRunPace">--:--</div>
+      <div class="metric-sub" id="lastRunInfo">加载中...</div>
+    </div>
   </div>
 
   <!-- 主图表区 -->
@@ -1100,6 +1105,12 @@ let mainChart;
 function paceLabel(v) {
   const m = Math.floor(v); const s = Math.round((v - m) * 60);
   return `${m}:${String(s).padStart(2,'0')}`;
+}
+// ===== 填充最近一次运动卡片 =====
+const lastDetailRun = runs.filter(r => r.hasDetail).pop();
+if (lastDetailRun) {
+  document.getElementById('lastRunPace').textContent = paceLabel(lastDetailRun.pace) + '/km';
+  document.getElementById('lastRunInfo').textContent = lastDetailRun.date + ' · ' + lastDetailRun.hr + ' bpm · ' + lastDetailRun.dist.toFixed(1) + 'km';
 }
 // ===== 构建连续 30 天横坐标（无跑步日留空） =====
 const fullLabels = [], distFull = [], paceFull = [], hrFull = [];
