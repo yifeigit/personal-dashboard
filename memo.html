@@ -213,7 +213,7 @@
     </div>
     <div class="card">
       <div class="card-title">反应类型分布</div>
-      <div class="card-sub">今日 50 词首次反应</div>
+      <div class="card-sub" id="labelRespSub">今日 50 词首次反应</div>
       <div class="chart-wrap" style="height:180px;display:flex;align-items:center;justify-content:center">
         <canvas id="respDistChart"></canvas>
       </div>
@@ -222,7 +222,7 @@
 
   <!-- 全部单词表 -->
   <div class="card full-card" style="margin-bottom:16px">
-    <div class="card-title">今日全部 50 词</div>
+    <div class="card-title" id="labelWordTitle">今日全部 50 词</div>
     <div class="card-sub">点击表头排序 · 使用筛选按钮过滤</div>
     <div class="filter-bar" id="filterBar"></div>
     <div style="overflow-x:auto">
@@ -1542,6 +1542,13 @@ const studyRecords = [
       if (sub) sub.textContent = txt;
     }
   }
+
+  // 动态标题和副标题
+  const nWords = memoData.todayItems.length;
+  const titleEl = document.getElementById('labelWordTitle');
+  const subEl = document.getElementById('labelRespSub');
+  if (titleEl) titleEl.textContent = '今日全部 ' + nWords + ' 词';
+  if (subEl) subEl.textContent = '今日 ' + nWords + ' 词首次反应';
 
   // 环形图区域文字
   const ringStats = document.querySelector('.ring-stats');
