@@ -1544,7 +1544,7 @@ const studyRecords = [
   }
 
   // 动态标题和副标题
-  const nWords = memoData.todayItems.length;
+  const nWords = memoData.total || memoData.todayItems.length;
   const titleEl = document.getElementById('labelWordTitle');
   const subEl = document.getElementById('labelRespSub');
   if (titleEl) titleEl.textContent = '今日全部 ' + nWords + ' 词';
@@ -1565,7 +1565,7 @@ const studyRecords = [
   // 标题：遍历所有 .card-sub 找到含"首次反应"的，不要只用第一个
   document.querySelectorAll('.card-sub').forEach(el => {
     if (el.textContent.includes('首次反应')) {
-      el.textContent = '今日 ' + items.length + ' 词首次反应';
+      el.textContent = '今日 ' + nWords + ' 词首次反应';
     }
   });
   const wordTitle = document.querySelector('.full-card .card-title');
