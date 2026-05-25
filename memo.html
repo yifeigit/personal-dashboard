@@ -1502,6 +1502,70 @@ const studyRecords = [
   }
 ];
 
+// ===== 0. 动态填充指标卡片（解决硬编码问题）=====
+(function populateMetrics() {
+  const d = memoData;
+  const items = d.todayItems || [];
+  const finished = d.finished || 0;
+  const total   = d.total || 50;
+  const mins    = Math.round((d.studyTimeMs || 0) / 60000 * 10) / 10;
+
+  // 统计
+  const nNew      = items.filter(i => i.isNew).length;
+  const nFamiliar = items.filter(i => i.response === 0).length;
+  const nForget   = items.filter(i => i.response === 1).length;
+  const nVague    = items.filter(i => i.response === 2).length;
+  const famPct    = items.length ? Math.round(nFamiliar / items.length * 100) : 0;
+
+  // 更新 DOM
+  const setEl = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  setEl('mProgress', finished + '<span class="metric-unit">/' + total + '</span>');
+  setEl('mTime',     mins + '<span class="metric-unit">min</span>');
+  setEl('mNew',      String(nNew));
+  setEl('mAccu',     famPct + '<span class="metric-unit">%</span>');
+  setEl('mReview',   String(nForget + nVague));
+  setEl('mTotal',    String(d.totalWords || 6001));
+
+  // 副标题
+  const subMap = {
+    mProgress: finished >= total ? '目标完成 ✓' : '学习中…',
+    mTime:     '专注高效',
+    mNew:      '今日新遇',
+    mAccu:     '反应分布',
+    mReview:   '忘记+模糊',
+    mTotal:    '在学词汇',
+  };
+  for (const [id, txt] of Object.entries(subMap)) {
+    const card = document.getElementById(id);
+    if (card && card.parentElement) {
+      const sub = card.parentElement.querySelector('.metric-sub');
+      if (sub) sub.textContent = txt;
+    }
+  }
+
+  // 环形图区域文字
+  const ringStats = document.querySelector('.ring-stats');
+  if (ringStats && ringStats.children.length >= 4) {
+    ringStats.children[0].querySelector('.stat-num').innerHTML = finished + '/' + total;
+    ringStats.children[0].querySelector('.stat-sub').textContent = famPct + '% 完成';
+    ringStats.children[1].querySelector('.stat-num').textContent = mins + 'min';
+    ringStats.children[2].querySelector('.stat-num').textContent = nNew;
+    ringStats.children[2].querySelector('.stat-sub').textContent = (items.length - nNew) + ' 个复习';
+    ringStats.children[3].querySelector('.stat-num').textContent = nForget + nVague;
+    ringStats.children[3].querySelector('.stat-sub').textContent = nForget + ' 忘记 · ' + nVague + ' 模糊';
+  }
+
+  // 标题
+  const chartSub = document.querySelector('.card-sub');
+  if (chartSub && chartSub.textContent.includes('首次反应')) {
+    chartSub.textContent = '今日 ' + items.length + ' 词首次反应';
+  }
+  const wordTitle = document.querySelector('.full-card .card-title');
+  if (wordTitle && wordTitle.textContent.includes('全部')) {
+    wordTitle.textContent = '今日全部 ' + items.length + ' 词';
+  }
+})();
+
 // ===== 1. 环形进度图 =====
 const ringPct = memoData.finished / memoData.total;
 new Chart(document.getElementById('memoRingChart'), {
