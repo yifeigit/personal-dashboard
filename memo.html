@@ -1555,11 +1555,12 @@ const studyRecords = [
     ringStats.children[3].querySelector('.stat-sub').textContent = nForget + ' 忘记 · ' + nVague + ' 模糊';
   }
 
-  // 标题
-  const chartSub = document.querySelector('.card-sub');
-  if (chartSub && chartSub.textContent.includes('首次反应')) {
-    chartSub.textContent = '今日 ' + items.length + ' 词首次反应';
-  }
+  // 标题：遍历所有 .card-sub 找到含"首次反应"的，不要只用第一个
+  document.querySelectorAll('.card-sub').forEach(el => {
+    if (el.textContent.includes('首次反应')) {
+      el.textContent = '今日 ' + items.length + ' 词首次反应';
+    }
+  });
   const wordTitle = document.querySelector('.full-card .card-title');
   if (wordTitle && wordTitle.textContent.includes('全部')) {
     wordTitle.textContent = '今日全部 ' + items.length + ' 词';
