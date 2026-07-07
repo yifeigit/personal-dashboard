@@ -14,9 +14,10 @@ const { execSync } = require('child_process');
 const BASE_DIR = __dirname;
 const DASHBOARD = path.join(BASE_DIR, 'dashboard.html');
 const MEMO      = path.join(BASE_DIR, 'memo.html');
+const STUDY_LOG = path.join(BASE_DIR, '.study-log.json');
 
 // ===== 配置 =====
-const MAIMEMO_TOKEN  = '9d8cd1568fa003b8c31f9e047ca5e1fd5cb60fe0c679159a1c2c3e1dde48ac19';
+const MAIMEMO_TOKEN  = 'f746779f407db84c743607e6b9fdf2c4d3b4cd9918333f924238e4313d353893';
 const MAIMEMO_BASE  = 'https://open.maimemo.com/open/api/v1';
 const COROS_CLI      = 'D:/soft/npm-global/node_modules/coros-mcp/dist/cli.js';
 
@@ -92,8 +93,8 @@ function fetchCorosData() {
     ['recovery',  'queryRecoveryStatus',                {}],
     ['restingHr', 'queryRestingHeartRate',             { days:7, timezone:'Asia/Shanghai' }],
     ['sleepData',  'querySleepData',                    { days:30, timezone:'Asia/Shanghai' }],
-    // ★ v4: 传 startDate/endDate 获取全量运动记录
-    ['sportRecords','querySportRecords',               { startDate:'20260101', endDate:'20260520', limit:200, timezone:'Asia/Shanghai' }],
+    // ★ v4: 传 startDate/endDate 获取全量运动记录（endDate 动态计算为今天）
+    ['sportRecords','querySportRecords',               { startDate:'20260101', endDate: new Date().toISOString().slice(0,10).replace(/-/g,''), limit:200, timezone:'Asia/Shanghai' }],
     ['dailyHealth', 'queryDailyHealthData',           { days:30, timezone:'Asia/Shanghai' }],
   ];
   for (const [key, tool, args] of tasks) {
@@ -117,7 +118,11 @@ function fetchMaiMemo() {
   console.log('  STEP 2/5  拉取墨墨背单词数据');
   console.log('═'.repeat(48));
   const progress   = maimemoCurl('/study/get_study_progress', {});
-  const todayItems = maimemoCurl('/study/get_today_items', {});
+  const todayItems = maimemoCurl('/study/get_today_items', { limit: 200 });
+  let totalWords = 0;
+  const countRes = maimemoCurl('/study/query_study_records', { as_count: true });
+  if (countRes && countRes.success && countRes.data) totalWords = countRes.data.count || 6001;
+  console.log('  总词汇量: ' + totalWords);
   console.log('  学习进度: ' + (progress && progress.success ? '✓' : '✗'));
   console.log('  今日单词: ' + (todayItems && todayItems.success
     ? '✓ (' + (todayItems.data && todayItems.data.today_items
@@ -125,7 +130,7 @@ function fetchMaiMemo() {
     : '✗'));
   let records = null;
   if (progress && progress.success) {
-    records = maimemoCurl('/study/query_study_records', { limit: 30 });
+    records = maimemoCurl('/study/query_study_records', { limit: 200 });
     console.log('  学习记录: ' + (records && records.success
       ? '✓ (' + (records.data && records.data.records ? records.data.records.length : 0) + ')'
       : '-'));
@@ -134,6 +139,7 @@ function fetchMaiMemo() {
     progress: (progress && progress.data && progress.data.progress) || null,
     items:    (todayItems && todayItems.data && todayItems.data.today_items) || [],
     records:  (records && records.data && records.data.records) || [],
+    totalWords: totalWords,
   };
 }
 
@@ -342,10 +348,58 @@ function updateMemo(memo) {
   let html = fs.readFileSync(MEMO, 'utf8');
   const now  = new Date().toISOString().slice(0, 10);
   const p    = memo.progress;
+  // 批量获取释义（优先自定义，回退到 MyMemory 翻译）
+  const defs = {};
+  if (memo.items && memo.items.length) {
+    const vocIds = memo.items.map(it => it.voc_id).filter(Boolean);
+    console.log('  获取释义中 (' + vocIds.length + ' 词)...');
+    // 1. 先查自定义释义
+    let fetched = 0;
+    for (const vid of vocIds) {
+      try {
+        const url = 'https://open.maimemo.com/open/api/v1/interpretations?voc_id=' + encodeURIComponent(vid);
+        const raw = run('curl -s --noproxy "*" --max-time 5 "' + url + '" -H "Authorization: Bearer ' + MAIMEMO_TOKEN + '"');
+        if (raw) {
+          const j = JSON.parse(raw);
+          if (j.success && j.data && j.data.interpretations && j.data.interpretations.length) {
+            defs[vid] = j.data.interpretations[0].interpretation;
+          }
+        }
+      } catch(e) {}
+      fetched++;
+      if (fetched % 10 === 0) process.stdout.write(' ' + fetched);
+    }
+    // 2. 无自定义释义的词汇用 MyMemory 翻译
+    const missing = memo.items.filter(it => !defs[it.voc_id]).map(it => it.voc_spelling);
+    if (missing.length) {
+      console.log('');
+      process.stdout.write('  MyMemory 翻译中 (' + missing.length + ' 词)...');
+      let translated = 0;
+      for (const word of missing) {
+        try {
+          const raw = run('curl -s --noproxy "*" --max-time 5 "https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en|zh"');
+          if (raw) {
+            const j = JSON.parse(raw);
+            const zh = j.responseData && j.responseData.translatedText;
+            if (zh) {
+              // 把翻译结果关联到该词对应的 items
+              memo.items.filter(it => it.voc_spelling === word).forEach(it => { defs[it.voc_id] = zh; });
+            }
+          }
+        } catch(e) {}
+        translated++;
+        if (translated % 10 === 0) process.stdout.write(' ' + translated);
+      }
+    }
+    console.log('  ✓ (' + Object.keys(defs).length + ' 词有释义)');
+  }
+
   const RESP_MAP = { FAMILIAR:0, FORGET:1, VAGUE:2 };
   const items = memo.items.map(function(it) {
     return {
       spelling: it.voc_spelling || '',
+      translation: defs[it.voc_id] || '',
+      vocId: it.voc_id || '',
       response: RESP_MAP[(it.first_response||'').toUpperCase()] || 0,
       isNew: !!it.is_new,
       order: it.order || 0,
@@ -354,7 +408,8 @@ function updateMemo(memo) {
   const recs = memo.records.map(function(it) {
     return {
       count: it.study_count || 0,
-      lastResp: it.last_study_date ? it.last_study_date.slice(0,10) : '',
+      lastResp: it.last_response || 'FAMILIAR',
+      lastDate: it.last_study_date ? it.last_study_date.slice(0,10) : '',
       tags: it.tags || [],
     };
   });
@@ -362,10 +417,50 @@ function updateMemo(memo) {
   html = html.replace(
     /const memoData = \{[\s\S]*?\};/m,
     'const memoData = {\n' +
-    '  finished: ' + (p.finished||50) + ', total: ' + (p.total||50) + ',\n' +
-    '  studyTimeMs: ' + (p.study_time||295281) + ', totalWords: 6001,\n' +
+    '  finished: ' + (p.finished||0) + ', total: ' + (p.total||p.finished||0) + ',\n' +
+    '  studyTimeMs: ' + (p.study_time||0) + ', totalWords: ' + (memo.totalWords || 0) + ',\n' +
     '  todayItems: ' + JSON.stringify(items) + '\n};'
   );
+
+  html = html.replace(
+    /<div class="card-title" id="labelWordTitle">[^<]*<\/div>/,
+    '<div class="card-title" id="labelWordTitle">今日全部 ' + (p.total || p.finished || 50) + ' 词</div>'
+  );
+  html = html.replace(
+    /<div class="card-sub" id="labelRespSub">[^<]*<\/div>/,
+    '<div class="card-sub" id="labelRespSub">今日 ' + (p.total || p.finished || 50) + ' 词首次反应</div>'
+  );
+
+  // 计算所有动态数值
+  const nNew2    = items.filter(i => i.isNew).length;
+  const nFam2    = items.filter(i => i.response === 0).length;
+  const nForget2 = items.filter(i => i.response === 1).length;
+  const nVague2  = items.filter(i => i.response === 2).length;
+  const mins2    = Math.round((p.study_time || 0) / 60000 * 10) / 10;
+  const famPct2  = items.length ? Math.round(nFam2 / items.length * 100) : 0;
+
+  // 清除 metric-card 硬编码（允许内部有 span 子元素）
+  html = html.replace(/<div class="metric-value green" id="mProgress">[\s\S]*?<\/div>/,
+    '<div class="metric-value green" id="mProgress">' + (p.finished||0) + '<span class="metric-unit">/' + (p.total||p.finished||0) + '</span></div>');
+  html = html.replace(/<div class="metric-value blue" id="mTime">[\s\S]*?<\/div>/,
+    '<div class="metric-value blue" id="mTime">' + mins2 + '<span class="metric-unit">min</span></div>');
+  html = html.replace(/<div class="metric-value amber" id="mNew">[\s\S]*?<\/div>/,
+    '<div class="metric-value amber" id="mNew">' + nNew2 + '</div>');
+  html = html.replace(/<div class="metric-value purple" id="mAccu">[\s\S]*?<\/div>/,
+    '<div class="metric-value purple" id="mAccu">' + famPct2 + '<span class="metric-unit">%</span></div>');
+  html = html.replace(/<div class="metric-value" id="mTotal"[^>]*>[\s\S]*?<\/div>/,
+    '<div class="metric-value" id="mTotal" style="color:#2c2c2a">' + (memo.totalWords || 0) + '</div>');
+  html = html.replace(/<div class="metric-value red" id="mReview">[\s\S]*?<\/div>/,
+    '<div class="metric-value red" id="mReview">' + (nForget2 + nVague2) + '</div>');
+
+  // 清除 ring-stats 硬编码
+  const ringHtml = '<div class="ring-stats">' +
+    '<div class="stat-row"><span class="stat-num green">' + (p.finished||0) + '/' + (p.total||p.finished||0) + '</span><span class="stat-label">今日目标</span><span class="stat-sub">' + famPct2 + '% 完成</span></div>' +
+    '<div class="stat-row"><span class="stat-num blue">' + mins2 + 'min</span><span class="stat-label">学习时长</span></div>' +
+    '<div class="stat-row"><span class="stat-num amber">' + nNew2 + '</span><span class="stat-label">新学词汇</span><span class="stat-sub">' + (items.length - nNew2) + ' 个复习</span></div>' +
+    '<div class="stat-row"><span class="stat-num red">' + (nForget2 + nVague2) + '</span><span class="stat-label">需关注</span><span class="stat-sub">' + nForget2 + ' 忘记 · ' + nVague2 + ' 模糊</span></div>' +
+    '</div>';
+  html = html.replace('__RING_STATS__', ringHtml);
 
   html = html.replace(
     /const studyRecords = \[[\s\S]*?\];/m,
@@ -373,6 +468,25 @@ function updateMemo(memo) {
   );
 
   html = html.replace(/已同步.*$/, '已同步 · ' + now);
+
+  // 维护学习日志（每日自动记录）
+  let log = [];
+  try { log = JSON.parse(fs.readFileSync(STUDY_LOG, 'utf8')); } catch(e) {}
+  const todayKey = now.slice(5).replace('-','/');
+  const todayMins = Math.round((p.study_time || 0) / 60000 * 10) / 10;
+  // 更新或追加今日记录
+  const existIdx = log.findIndex(e => e.date === todayKey);
+  if (existIdx >= 0) log[existIdx] = { date: todayKey, mins: todayMins, words: p.total || 50 };
+  else log.push({ date: todayKey, mins: todayMins, words: p.total || 50 });
+  if (log.length > 14) log = log.slice(-14);
+  fs.writeFileSync(STUDY_LOG, JSON.stringify(log), 'utf8');
+  // 注入到 HTML
+  html = html.replace(
+    /const studyLog = \[[\s\S]*?\];/m,
+    'const studyLog = ' + JSON.stringify(log) + ';'
+  );
+  console.log('  学习日志: ' + log.length + ' 天');
+
   fs.writeFileSync(MEMO, html, 'utf8');
   console.log('  ✓ memo.html 已更新');
   return true;
