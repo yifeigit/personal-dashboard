@@ -1,6 +1,7 @@
 /**
- * 一键更新仪表盘数据脚本 (v4)
+ * 一键更新仪表盘数据脚本 (v5)
  *
+ * v5: 移除墨墨背单词模块，仅保留 COROS 运动健康数据
  * v4: 使用 npm 全局 CLI（call-tool 格式），传递 startDate/endDate 获取全量运动记录（58条）
  * v3: 修复代理、bash 执行、变量命名等问题
  *
@@ -10,15 +11,12 @@
 const fs   = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const https = require('https');
 
 const BASE_DIR = __dirname;
 const DASHBOARD = path.join(BASE_DIR, 'dashboard.html');
-const MEMO      = path.join(BASE_DIR, 'memo.html');
-const STUDY_LOG = path.join(BASE_DIR, '.study-log.json');
 
 // ===== 配置 =====
-const MAIMEMO_TOKEN  = 'f746779f407db84c743607e6b9fdf2c4d3b4cd9918333f924238e4313d353893';
-const MAIMEMO_BASE  = 'https://open.maimemo.com/open/api/v1';
 const COROS_CLI      = 'D:/soft/npm-global/node_modules/coros-mcp/dist/cli.js';
 
 // ===== 执行命令（清除代理）=====
@@ -34,6 +32,22 @@ function run(cmd) {
     env.HTTP_PROXY  = '';
     env.HTTPS_PROXY = '';
 
+    const opts = { encoding: 'utf-8', timeout: 60000, stdio: ['pipe','pipe','pipe'], env };
+    return execSync(cmd, opts).trim();
+  } catch (e) {
+    return null;
+  }
+}
+
+// ===== 执行命令（保留代理环境变量）=====
+function runWithProxy(cmd) {
+  try {
+    const env = Object.assign({}, process.env);
+    // 确保代理环境变量存在（父进程可能已清除它们）
+    if (!env.http_proxy  && !env.HTTP_PROXY)  { env.http_proxy  = 'http://127.0.0.1:7897'; }
+    if (!env.https_proxy && !env.HTTPS_PROXY) { env.https_proxy = 'http://127.0.0.1:7897'; }
+    if (!env.HTTP_PROXY)  { env.HTTP_PROXY  = 'http://127.0.0.1:7897'; }
+    if (!env.HTTPS_PROXY) { env.HTTPS_PROXY = 'http://127.0.0.1:7897'; }
     const opts = { encoding: 'utf-8', timeout: 30000, stdio: ['pipe','pipe','pipe'], env };
     return execSync(cmd, opts).trim();
   } catch (e) {
@@ -47,7 +61,7 @@ function corosCall(tool, args) {
     ? (typeof args === 'object' ? JSON.stringify(args) : String(args))
     : '{}';
   const cmd = 'node "' + COROS_CLI + '" call-tool --tool ' + tool + ' --arguments-json "' + argStr.replace(/"/g, '\\"') + '"';
-  const raw = run(cmd);
+  const raw = runWithProxy(cmd);
   if (!raw || raw[0] !== '{') return '';
   try {
     const j = JSON.parse(raw);
@@ -61,30 +75,10 @@ function corosCall(tool, args) {
   } catch (e) { return raw; }
 }
 
-// ===== 调用 MaiMemo API（curl --noproxy）=====
-function maimemoCurl(endpoint, body) {
-  const data = JSON.stringify(body || {});
-  const url  = MAIMEMO_BASE + endpoint;
-  const cmd = [
-    'curl', '-s', '--noproxy', '*', '--max-time', '15',
-    '-X', 'POST',
-    url,
-    '-H', '"Authorization: Bearer ' + MAIMEMO_TOKEN + '"',
-    '-H', '"Content-Type: application/json"',
-    '-d', '"' + data.replace(/"/g, '\\"') + '"',
-  ].join(' ');
-  const raw = run(cmd);
-  if (!raw) return null;
-  try { return JSON.parse(raw); } catch (e) {
-    console.log('  [curl] parse error, head:', raw.slice(0, 80));
-    return null;
-  }
-}
-
 // ■■■ 1. 拉取 COROS 数据 ■■■
 function fetchCorosData() {
   console.log('\n' + '═'.repeat(48));
-  console.log('  STEP 1/5  拉取 COROS 运动健康数据');
+  console.log('  STEP 1/3  拉取 COROS 运动健康数据');
   console.log('═'.repeat(48));
   const out = {};
   const tasks = [
@@ -112,38 +106,7 @@ function fetchCorosData() {
   return out;
 }
 
-// ■■■ 2. 拉取墨墨数据 ■■■
-function fetchMaiMemo() {
-  console.log('\n' + '═'.repeat(48));
-  console.log('  STEP 2/5  拉取墨墨背单词数据');
-  console.log('═'.repeat(48));
-  const progress   = maimemoCurl('/study/get_study_progress', {});
-  const todayItems = maimemoCurl('/study/get_today_items', { limit: 200 });
-  let totalWords = 0;
-  const countRes = maimemoCurl('/study/query_study_records', { as_count: true });
-  if (countRes && countRes.success && countRes.data) totalWords = countRes.data.count || 6001;
-  console.log('  总词汇量: ' + totalWords);
-  console.log('  学习进度: ' + (progress && progress.success ? '✓' : '✗'));
-  console.log('  今日单词: ' + (todayItems && todayItems.success
-    ? '✓ (' + (todayItems.data && todayItems.data.today_items
-        ? todayItems.data.today_items.length : 0) + ')'
-    : '✗'));
-  let records = null;
-  if (progress && progress.success) {
-    records = maimemoCurl('/study/query_study_records', { limit: 200 });
-    console.log('  学习记录: ' + (records && records.success
-      ? '✓ (' + (records.data && records.data.records ? records.data.records.length : 0) + ')'
-      : '-'));
-  }
-  return {
-    progress: (progress && progress.data && progress.data.progress) || null,
-    items:    (todayItems && todayItems.data && todayItems.data.today_items) || [],
-    records:  (records && records.data && records.data.records) || [],
-    totalWords: totalWords,
-  };
-}
-
-// ■■■ 3. 解析 COROS 文本 → JS 对象 ■■■
+// ■■■ 2. 解析 COROS 文本 → JS 对象 ■■■
 function parseCoros(textBlocks) {
   const runs = [], allRuns = new Map(), sleepDays = [], sleepStages = [];
   let vo2max = 54, restingHr = 43, recovery = 100;
@@ -285,10 +248,10 @@ function parseCoros(textBlocks) {
   return { runs, allRuns: runsArr, sleepDays, sleepStages, vo2max, restingHr, recovery };
 }
 
-// ■■■ 4. 写入 dashboard.html ■■■
+// ■■■ 3. 写入 dashboard.html ■■■
 function updateDashboard(data) {
   console.log('\n' + '═'.repeat(48));
-  console.log('  STEP 3/5  更新 dashboard.html');
+  console.log('  STEP 2/3  更新 dashboard.html');
   console.log('═'.repeat(48));
   let html = fs.readFileSync(DASHBOARD, 'utf8');
 
@@ -336,177 +299,98 @@ function updateDashboard(data) {
   return true;
 }
 
-// ■■■ 5. 写入 memo.html ■■■
-function updateMemo(memo) {
-  console.log('\n' + '═'.repeat(48));
-  console.log('  STEP 4/5  更新 memo.html');
-  console.log('═'.repeat(48));
-  if (!memo.progress || !memo.items || !memo.items.length) {
-    console.log('  数据不足，跳过');
-    return false;
-  }
-  let html = fs.readFileSync(MEMO, 'utf8');
-  const now  = new Date().toISOString().slice(0, 10);
-  const p    = memo.progress;
-  // 批量获取释义（优先自定义，回退到 MyMemory 翻译）
-  const defs = {};
-  if (memo.items && memo.items.length) {
-    const vocIds = memo.items.map(it => it.voc_id).filter(Boolean);
-    console.log('  获取释义中 (' + vocIds.length + ' 词)...');
-    // 1. 先查自定义释义
-    let fetched = 0;
-    for (const vid of vocIds) {
-      try {
-        const url = 'https://open.maimemo.com/open/api/v1/interpretations?voc_id=' + encodeURIComponent(vid);
-        const raw = run('curl -s --noproxy "*" --max-time 5 "' + url + '" -H "Authorization: Bearer ' + MAIMEMO_TOKEN + '"');
-        if (raw) {
-          const j = JSON.parse(raw);
-          if (j.success && j.data && j.data.interpretations && j.data.interpretations.length) {
-            defs[vid] = j.data.interpretations[0].interpretation;
-          }
-        }
-      } catch(e) {}
-      fetched++;
-      if (fetched % 10 === 0) process.stdout.write(' ' + fetched);
-    }
-    // 2. 无自定义释义的词汇用 MyMemory 翻译
-    const missing = memo.items.filter(it => !defs[it.voc_id]).map(it => it.voc_spelling);
-    if (missing.length) {
-      console.log('');
-      process.stdout.write('  MyMemory 翻译中 (' + missing.length + ' 词)...');
-      let translated = 0;
-      for (const word of missing) {
-        try {
-          const raw = run('curl -s --noproxy "*" --max-time 5 "https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en|zh"');
-          if (raw) {
-            const j = JSON.parse(raw);
-            const zh = j.responseData && j.responseData.translatedText;
-            if (zh) {
-              // 把翻译结果关联到该词对应的 items
-              memo.items.filter(it => it.voc_spelling === word).forEach(it => { defs[it.voc_id] = zh; });
-            }
-          }
-        } catch(e) {}
-        translated++;
-        if (translated % 10 === 0) process.stdout.write(' ' + translated);
-      }
-    }
-    console.log('  ✓ (' + Object.keys(defs).length + ' 词有释义)');
-  }
-
-  const RESP_MAP = { FAMILIAR:0, FORGET:1, VAGUE:2 };
-  const items = memo.items.map(function(it) {
-    return {
-      spelling: it.voc_spelling || '',
-      translation: defs[it.voc_id] || '',
-      vocId: it.voc_id || '',
-      response: RESP_MAP[(it.first_response||'').toUpperCase()] || 0,
-      isNew: !!it.is_new,
-      order: it.order || 0,
-    };
-  });
-  const recs = memo.records.map(function(it) {
-    return {
-      count: it.study_count || 0,
-      lastResp: it.last_response || 'FAMILIAR',
-      lastDate: it.last_study_date ? it.last_study_date.slice(0,10) : '',
-      tags: it.tags || [],
-    };
-  });
-
-  html = html.replace(
-    /const memoData = \{[\s\S]*?\};/m,
-    'const memoData = {\n' +
-    '  finished: ' + (p.finished||0) + ', total: ' + (p.total||p.finished||0) + ',\n' +
-    '  studyTimeMs: ' + (p.study_time||0) + ', totalWords: ' + (memo.totalWords || 0) + ',\n' +
-    '  todayItems: ' + JSON.stringify(items) + '\n};'
-  );
-
-  html = html.replace(
-    /<div class="card-title" id="labelWordTitle">[^<]*<\/div>/,
-    '<div class="card-title" id="labelWordTitle">今日全部 ' + (p.total || p.finished || 50) + ' 词</div>'
-  );
-  html = html.replace(
-    /<div class="card-sub" id="labelRespSub">[^<]*<\/div>/,
-    '<div class="card-sub" id="labelRespSub">今日 ' + (p.total || p.finished || 50) + ' 词首次反应</div>'
-  );
-
-  // 计算所有动态数值
-  const nNew2    = items.filter(i => i.isNew).length;
-  const nFam2    = items.filter(i => i.response === 0).length;
-  const nForget2 = items.filter(i => i.response === 1).length;
-  const nVague2  = items.filter(i => i.response === 2).length;
-  const mins2    = Math.round((p.study_time || 0) / 60000 * 10) / 10;
-  const famPct2  = items.length ? Math.round(nFam2 / items.length * 100) : 0;
-
-  // 清除 metric-card 硬编码（允许内部有 span 子元素）
-  html = html.replace(/<div class="metric-value green" id="mProgress">[\s\S]*?<\/div>/,
-    '<div class="metric-value green" id="mProgress">' + (p.finished||0) + '<span class="metric-unit">/' + (p.total||p.finished||0) + '</span></div>');
-  html = html.replace(/<div class="metric-value blue" id="mTime">[\s\S]*?<\/div>/,
-    '<div class="metric-value blue" id="mTime">' + mins2 + '<span class="metric-unit">min</span></div>');
-  html = html.replace(/<div class="metric-value amber" id="mNew">[\s\S]*?<\/div>/,
-    '<div class="metric-value amber" id="mNew">' + nNew2 + '</div>');
-  html = html.replace(/<div class="metric-value purple" id="mAccu">[\s\S]*?<\/div>/,
-    '<div class="metric-value purple" id="mAccu">' + famPct2 + '<span class="metric-unit">%</span></div>');
-  html = html.replace(/<div class="metric-value" id="mTotal"[^>]*>[\s\S]*?<\/div>/,
-    '<div class="metric-value" id="mTotal" style="color:#2c2c2a">' + (memo.totalWords || 0) + '</div>');
-  html = html.replace(/<div class="metric-value red" id="mReview">[\s\S]*?<\/div>/,
-    '<div class="metric-value red" id="mReview">' + (nForget2 + nVague2) + '</div>');
-
-  // 清除 ring-stats 硬编码
-  const ringHtml = '<div class="ring-stats">' +
-    '<div class="stat-row"><span class="stat-num green">' + (p.finished||0) + '/' + (p.total||p.finished||0) + '</span><span class="stat-label">今日目标</span><span class="stat-sub">' + famPct2 + '% 完成</span></div>' +
-    '<div class="stat-row"><span class="stat-num blue">' + mins2 + 'min</span><span class="stat-label">学习时长</span></div>' +
-    '<div class="stat-row"><span class="stat-num amber">' + nNew2 + '</span><span class="stat-label">新学词汇</span><span class="stat-sub">' + (items.length - nNew2) + ' 个复习</span></div>' +
-    '<div class="stat-row"><span class="stat-num red">' + (nForget2 + nVague2) + '</span><span class="stat-label">需关注</span><span class="stat-sub">' + nForget2 + ' 忘记 · ' + nVague2 + ' 模糊</span></div>' +
-    '</div>';
-  html = html.replace('__RING_STATS__', ringHtml);
-
-  html = html.replace(
-    /const studyRecords = \[[\s\S]*?\];/m,
-    'const studyRecords = ' + JSON.stringify(recs, null, 2) + ';'
-  );
-
-  html = html.replace(/已同步.*$/, '已同步 · ' + now);
-
-  // 维护学习日志（每日自动记录）
-  let log = [];
-  try { log = JSON.parse(fs.readFileSync(STUDY_LOG, 'utf8')); } catch(e) {}
-  const todayKey = now.slice(5).replace('-','/');
-  const todayMins = Math.round((p.study_time || 0) / 60000 * 10) / 10;
-  // 更新或追加今日记录
-  const existIdx = log.findIndex(e => e.date === todayKey);
-  if (existIdx >= 0) log[existIdx] = { date: todayKey, mins: todayMins, words: p.total || 50 };
-  else log.push({ date: todayKey, mins: todayMins, words: p.total || 50 });
-  if (log.length > 14) log = log.slice(-14);
-  fs.writeFileSync(STUDY_LOG, JSON.stringify(log), 'utf8');
-  // 注入到 HTML
-  html = html.replace(
-    /const studyLog = \[[\s\S]*?\];/m,
-    'const studyLog = ' + JSON.stringify(log) + ';'
-  );
-  console.log('  学习日志: ' + log.length + ' 天');
-
-  fs.writeFileSync(MEMO, html, 'utf8');
-  console.log('  ✓ memo.html 已更新');
-  return true;
-}
-
-// ■■■ 6. Git 提交 & 推送 ■■■
+// ■■■ 4. Git 提交 & 推送 ■■■
 function gitDeploy() {
   console.log('\n' + '═'.repeat(48));
-  console.log('  STEP 5/5  Git 提交 & 推送');
+  console.log('  STEP 3/3  Git 提交 & 推送');
   console.log('═'.repeat(48));
-  run('git add dashboard.html memo.html');
+  run('git add dashboard.html');
   const diff = run('git diff --cached --stat') || '';
   if (!diff.trim()) { console.log('  无变化，跳过提交'); return false; }
   const ts = new Date().toISOString().slice(0,16).replace('T',' ');
   run('git commit -m "auto-update: ' + ts + '"');
-  run('git push');
-  console.log('\n  ✓ 已推送！GitHub Pages 约 1~2 分钟后生效\n');
-  console.log('  运动健康: https://yifeigit.github.io/personal-dashboard/dashboard.html');
-  console.log('  背单词:   https://yifeigit.github.io/personal-dashboard/memo.html');
+  // 优先尝试 git push（需要代理），失败则用 gh api 回退
+  const pushed = gitTryPush();
+  if (pushed) {
+    console.log('\n  ✓ 已推送！GitHub Pages 约 1~2 分钟后生效\n');
+    console.log('  运动健康: https://yifeigit.github.io/personal-dashboard/dashboard.html');
+  } else {
+    console.log('\n  ⚠ git push 失败（网络问题），改用 GitHub API 推送...');
+    const apiOk = gitApiPush(ts);
+    if (apiOk) {
+      console.log('\n  ✓ 已通过 API 推送！GitHub Pages 约 1~2 分钟后生效\n');
+      console.log('  运动健康: https://yifeigit.github.io/personal-dashboard/dashboard.html');
+    } else {
+      console.log('\n  ✗ API 推送也失败，请手动推送');
+    }
+  }
   return true;
+}
+
+// 尝试 git push（3 秒超时，仅检查网络是否通）
+function gitTryPush() {
+  try {
+    const env = Object.assign({}, process.env);
+    ['http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY',
+     'all_proxy','ALL_PROXY','no_proxy','NO_PROXY'].forEach(k => { delete env[k]; });
+    // 先设代理再推
+    execSync('git config http.proxy http://127.0.0.1:7897', { timeout: 3000, stdio: 'pipe', env });
+    execSync('git config https.proxy http://127.0.0.1:7897', { timeout: 3000, stdio: 'pipe', env });
+    execSync('git push', { timeout: 15000, stdio: 'pipe', env });
+    return true;
+  } catch(e) {
+    return false;
+  }
+}
+
+// 通过 GitHub API 推送（使用 gh api，走 api.github.com 无需代理）
+function gitApiPush(commitMsg) {
+  try {
+    const env = Object.assign({}, process.env);
+    ['http_proxy','https_proxy','HTTP_PROXY','HTTPS_PROXY',
+     'all_proxy','ALL_PROXY','no_proxy','NO_PROXY'].forEach(k => { delete env[k]; });
+
+    const dashContent = fs.readFileSync(DASHBOARD, 'utf8');
+    const dashB64 = Buffer.from(dashContent, 'utf8').toString('base64');
+
+    // 获取当前 commit SHA
+    const refRaw = execSync('gh api repos/yifeigit/personal-dashboard/git/refs/heads/master --jq .object.sha', { timeout: 15000, stdio: 'pipe', env }).toString().trim();
+    const baseSha = refRaw;
+
+    // 获取当前 tree SHA
+    const commitRaw = execSync('gh api repos/yifeigit/personal-dashboard/git/commits/' + baseSha + ' --jq .tree.sha', { timeout: 15000, stdio: 'pipe', env }).toString().trim();
+    const baseTree = commitRaw;
+
+    // 创建 blob：dashboard.html
+    const dashBlobJson = execSync('gh api repos/yifeigit/personal-dashboard/git/blobs -X POST -f content=' + dashB64 + ' -f encoding=base64 --jq .sha', { timeout: 15000, stdio: 'pipe', env }).toString().trim();
+
+    // 创建 tree（基于 base_tree 更新 dashboard.html）
+    const treePayload = JSON.stringify({
+      base_tree: baseTree,
+      tree: [
+        { path: 'dashboard.html', mode: '100644', type: 'blob', sha: dashBlobJson }
+      ]
+    });
+    const treeSha = execSync('gh api repos/yifeigit/personal-dashboard/git/trees -X POST --input - --jq .sha', { timeout: 15000, stdio: ['pipe','pipe','pipe'], env, input: treePayload }).toString().trim();
+
+    // 创建 commit
+    const commitPayload = JSON.stringify({
+      message: 'auto-update: ' + commitMsg,
+      tree: treeSha,
+      parents: [baseSha]
+    });
+    const newCommitSha = execSync('gh api repos/yifeigit/personal-dashboard/git/commits -X POST --input - --jq .sha', { timeout: 15000, stdio: ['pipe','pipe','pipe'], env, input: commitPayload }).toString().trim();
+
+    // 更新 master ref
+    const refPayload = JSON.stringify({ sha: newCommitSha, force: false });
+    execSync('gh api repos/yifeigit/personal-dashboard/git/refs/heads/master -X PATCH --input -', { timeout: 15000, stdio: ['pipe','pipe','pipe'], env, input: refPayload });
+
+    console.log('  ✓ API 推送完成 (提交 ' + newCommitSha.slice(0,7) + ')');
+    return true;
+  } catch(e) {
+    console.log('  ⚠ API 推送出错: ' + (e.stderr || e.message || e).toString().slice(0,200));
+    return false;
+  }
 }
 
 function escapeForRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -515,16 +399,14 @@ function logTitle(s) { console.log('\n' + '═'.repeat(48) + '\n  ' + s + '\n' +
 // ===== 主流程 =====
 (function() {
   const line = '╔' + '═'.repeat(36) + '╗';
-  const mid  = '║' + ' 仪表盘数据一键更新工具  v4'.padEnd(38) + '║';
+  const mid  = '║' + ' 仪表盘数据一键更新工具  v5'.padEnd(38) + '║';
   const line2= '╚' + '═'.repeat(36) + '╝';
   console.log('\n' + line + '\n' + mid + '\n' + line2);
 
   const coros = fetchCorosData();
-  const memo  = fetchMaiMemo();
 
   const dashData = parseCoros(coros);
   updateDashboard(dashData);
-  updateMemo(memo);
   gitDeploy();
 
   logTitle('完成! 大量精确数据已就绪   ');
