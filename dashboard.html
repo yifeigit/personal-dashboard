@@ -163,7 +163,7 @@
   <div>
     <h1>野生型 · 运动健康仪表盘</h1>
     <div class="sub">上海 · 178cm / 72kg · 26岁</div>
-    <div class="sync-badge" style="margin-top:6px">数据同步自 COROS 云端 · 2026-07-11</div>
+    <div class="sync-badge" style="margin-top:6px">数据同步自 COROS 云端 · 2026-07-22</div>
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end">
     <div class="nav-links">
@@ -184,7 +184,7 @@
     </div>
     <div class="metric-card">
       <div class="metric-label">静息心率</div>
-      <div class="metric-value green">54<span class="metric-unit">bpm</span></div>
+      <div class="metric-value green">53<span class="metric-unit">bpm</span></div>
       <div class="metric-sub">运动员水平</div>
     </div>
     <div class="metric-card">
@@ -275,18 +275,11 @@
 
 </main>
 
-<footer class="footer">数据来源：COROS 云端 · 更新于 2026-07-11 11:50</footer>
+<footer class="footer">数据来源：COROS 云端 · 更新于 2026-07-22 11:50</footer>
 
 <script>
 // ===== 真实数据 =====
 const runs = [
-    {
-      "date": "06/14",
-      "dist": 6.15,
-      "pace": 5.75,
-      "hr": 160,
-      "hasDetail": true
-    },
     {
       "date": "06/23",
       "dist": 10.33,
@@ -313,6 +306,13 @@ const runs = [
       "dist": 7.04,
       "pace": 5.83,
       "hr": 175,
+      "hasDetail": true
+    },
+    {
+      "date": "07/18",
+      "dist": 3.54,
+      "pace": 5.63,
+      "hr": 170,
       "hasDetail": true
     }
   ];
@@ -813,351 +813,370 @@ const allRuns = [
       "pace": 5.83,
       "hr": 175,
       "hasDetail": true
+    },
+    {
+      "date": "07/18",
+      "dist": 3.54,
+      "pace": 5.63,
+      "hr": 170,
+      "hasDetail": true
     }
   ];
 const sleepDays = [
     {
-      "date": "06-11",
-      "score": 97,
-      "h": 6.68
-    },
-    {
-      "date": "06-12",
-      "score": 93,
-      "h": 6.28
-    },
-    {
-      "date": "06-13",
-      "score": 57,
-      "h": 5.53
-    },
-    {
-      "date": "06-14",
-      "score": -1,
-      "h": 2.8
-    },
-    {
-      "date": "06-15",
-      "score": 50,
-      "h": 5.33
-    },
-    {
-      "date": "06-16",
-      "score": 94,
-      "h": 6.2
-    },
-    {
-      "date": "06-17",
-      "score": 96,
-      "h": 6.72
-    },
-    {
-      "date": "06-18",
-      "score": 70,
-      "h": 7.08
-    },
-    {
-      "date": "06-19",
-      "score": 58,
-      "h": 6.5
-    },
-    {
-      "date": "06-20",
-      "score": 90,
-      "h": 7.32
-    },
-    {
-      "date": "06-21",
-      "score": 73,
-      "h": 7.68
-    },
-    {
-      "date": "06-22",
+      "date": "06-23",
       "score": 65,
       "h": 6.83
     },
     {
-      "date": "06-24",
+      "date": "06-23",
       "score": 67,
       "h": 7.68
     },
     {
-      "date": "06-25",
+      "date": "06-24",
       "score": 76,
       "h": 6.63
     },
     {
-      "date": "06-26",
+      "date": "06-25",
       "score": 96,
       "h": 6.8
     },
     {
-      "date": "06-27",
+      "date": "06-26",
       "score": 71,
       "h": 6.92
     },
     {
-      "date": "06-28",
+      "date": "06-27",
       "score": 61,
       "h": 5.67
     },
     {
-      "date": "06-29",
+      "date": "06-28",
       "score": 39,
       "h": 2.68
     },
     {
-      "date": "06-30",
+      "date": "06-29",
       "score": 68,
       "h": 5.98
     },
     {
-      "date": "07-01",
+      "date": "06-30",
       "score": 44,
       "h": 3.47
     },
     {
-      "date": "07-02",
+      "date": "07-01",
       "score": 69,
       "h": 5.47
     },
     {
-      "date": "07-03",
+      "date": "07-02",
       "score": 37,
       "h": 4.68
     },
     {
-      "date": "07-04",
+      "date": "07-03",
       "score": 49,
       "h": 4.63
     },
     {
-      "date": "07-05",
+      "date": "07-04",
       "score": 51,
       "h": 9.1
     },
     {
-      "date": "07-06",
+      "date": "07-04",
       "score": 75,
       "h": 5.4
     },
     {
-      "date": "07-07",
+      "date": "07-06",
       "score": 69,
       "h": 5.5
     },
     {
-      "date": "07-08",
+      "date": "07-07",
       "score": 59,
       "h": 6.12
     },
     {
-      "date": "07-09",
+      "date": "07-07",
       "score": 80,
       "h": 4.67
     },
     {
-      "date": "07-10",
+      "date": "07-09",
       "score": 69,
       "h": 6.97
+    },
+    {
+      "date": "07-10",
+      "score": 25,
+      "h": 4.92
+    },
+    {
+      "date": "07-11",
+      "score": 43,
+      "h": 2.9
+    },
+    {
+      "date": "07-12",
+      "score": 93,
+      "h": 7.65
+    },
+    {
+      "date": "07-12",
+      "score": 73,
+      "h": 7.63
+    },
+    {
+      "date": "07-13",
+      "score": 39,
+      "h": 4.2
+    },
+    {
+      "date": "07-15",
+      "score": 71,
+      "h": 7.78
+    },
+    {
+      "date": "07-15",
+      "score": 35,
+      "h": 4.42
+    },
+    {
+      "date": "07-17",
+      "score": 40,
+      "h": 4.37
+    },
+    {
+      "date": "07-18",
+      "score": 68,
+      "h": 7.33
+    },
+    {
+      "date": "07-18",
+      "score": 54,
+      "h": 6.95
+    },
+    {
+      "date": "07-19",
+      "score": 73,
+      "h": 7.53
+    },
+    {
+      "date": "07-20",
+      "score": 80,
+      "h": 7.98
     }
   ];
 const sleepStagesData = [
     {
-      "date": "06/11",
-      "deep": 21,
-      "light": 55,
-      "rem": 22,
-      "awake": 2
-    },
-    {
-      "date": "06/12",
-      "deep": 16,
-      "light": 54,
-      "rem": 28,
-      "awake": 2
-    },
-    {
-      "date": "06/13",
-      "deep": 18,
-      "light": 56,
-      "rem": 21,
-      "awake": 5
-    },
-    {
-      "date": "06/14",
-      "deep": 0,
-      "light": 100,
-      "rem": 0,
-      "awake": 0
-    },
-    {
-      "date": "06/15",
-      "deep": 14,
-      "light": 65,
-      "rem": 18,
-      "awake": 3
-    },
-    {
-      "date": "06/16",
-      "deep": 23,
-      "light": 57,
-      "rem": 18,
-      "awake": 2
-    },
-    {
-      "date": "06/18",
-      "deep": 12,
-      "light": 67,
-      "rem": 18,
-      "awake": 3
-    },
-    {
-      "date": "06/19",
-      "deep": 14,
-      "light": 56,
-      "rem": 18,
-      "awake": 12
-    },
-    {
-      "date": "06/20",
-      "deep": 16,
-      "light": 69,
-      "rem": 12,
-      "awake": 3
-    },
-    {
-      "date": "06/21",
-      "deep": 13,
-      "light": 54,
-      "rem": 30,
-      "awake": 3
-    },
-    {
-      "date": "06/22",
+      "date": "06/23",
       "deep": 10,
       "light": 67,
       "rem": 19,
       "awake": 4
     },
     {
-      "date": "06/24",
+      "date": "06/23",
       "deep": 11,
       "light": 68,
       "rem": 18,
       "awake": 3
     },
     {
-      "date": "06/25",
+      "date": "06/24",
       "deep": 14,
       "light": 62,
       "rem": 21,
       "awake": 3
     },
     {
-      "date": "06/26",
+      "date": "06/25",
       "deep": 19,
       "light": 56,
       "rem": 21,
       "awake": 4
     },
     {
-      "date": "06/27",
+      "date": "06/26",
       "deep": 12,
       "light": 67,
       "rem": 19,
       "awake": 2
     },
     {
-      "date": "06/28",
+      "date": "06/27",
       "deep": 12,
       "light": 53,
       "rem": 32,
       "awake": 3
     },
     {
-      "date": "06/29",
+      "date": "06/28",
       "deep": 7,
       "light": 64,
       "rem": 12,
       "awake": 17
     },
     {
-      "date": "06/30",
+      "date": "06/29",
       "deep": 16,
       "light": 46,
       "rem": 27,
       "awake": 11
     },
     {
-      "date": "07/01",
+      "date": "06/30",
       "deep": 18,
       "light": 56,
       "rem": 15,
       "awake": 11
     },
     {
-      "date": "07/02",
+      "date": "07/01",
       "deep": 11,
       "light": 57,
       "rem": 27,
       "awake": 5
     },
     {
-      "date": "07/03",
+      "date": "07/02",
       "deep": 15,
       "light": 60,
       "rem": 12,
       "awake": 13
     },
     {
-      "date": "07/04",
+      "date": "07/03",
       "deep": 23,
       "light": 56,
       "rem": 20,
       "awake": 1
     },
     {
-      "date": "07/05",
+      "date": "07/04",
       "deep": 12,
       "light": 57,
       "rem": 21,
       "awake": 10
     },
     {
-      "date": "07/06",
+      "date": "07/04",
       "deep": 14,
       "light": 49,
       "rem": 33,
       "awake": 4
     },
     {
-      "date": "07/07",
+      "date": "07/06",
       "deep": 12,
       "light": 54,
       "rem": 30,
       "awake": 4
     },
     {
-      "date": "07/08",
+      "date": "07/07",
       "deep": 15,
       "light": 50,
       "rem": 22,
       "awake": 13
     },
     {
-      "date": "07/09",
+      "date": "07/07",
       "deep": 20,
       "light": 55,
       "rem": 15,
       "awake": 10
     },
     {
-      "date": "07/10",
+      "date": "07/09",
       "deep": 11,
       "light": 63,
       "rem": 22,
       "awake": 4
+    },
+    {
+      "date": "07/10",
+      "deep": 12,
+      "light": 55,
+      "rem": 7,
+      "awake": 26
+    },
+    {
+      "date": "07/11",
+      "deep": 10,
+      "light": 62,
+      "rem": 24,
+      "awake": 4
+    },
+    {
+      "date": "07/12",
+      "deep": 19,
+      "light": 44,
+      "rem": 33,
+      "awake": 4
+    },
+    {
+      "date": "07/12",
+      "deep": 13,
+      "light": 64,
+      "rem": 20,
+      "awake": 3
+    },
+    {
+      "date": "07/13",
+      "deep": 14,
+      "light": 44,
+      "rem": 30,
+      "awake": 12
+    },
+    {
+      "date": "07/15",
+      "deep": 12,
+      "light": 55,
+      "rem": 30,
+      "awake": 3
+    },
+    {
+      "date": "07/15",
+      "deep": 9,
+      "light": 54,
+      "rem": 16,
+      "awake": 21
+    },
+    {
+      "date": "07/18",
+      "deep": 15,
+      "light": 60,
+      "rem": 16,
+      "awake": 9
+    },
+    {
+      "date": "07/18",
+      "deep": 6,
+      "light": 70,
+      "rem": 20,
+      "awake": 4
+    },
+    {
+      "date": "07/19",
+      "deep": 13,
+      "light": 54,
+      "rem": 29,
+      "awake": 4
+    },
+    {
+      "date": "07/20",
+      "deep": 20,
+      "light": 52,
+      "rem": 21,
+      "awake": 7
     }
   ];
 
