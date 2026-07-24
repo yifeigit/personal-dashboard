@@ -60,7 +60,7 @@ function corosCall(tool, args) {
   const argStr = (args !== undefined && args !== null)
     ? (typeof args === 'object' ? JSON.stringify(args) : String(args))
     : '{}';
-  const cmd = 'node "' + COROS_CLI + '" call-tool --tool ' + tool + ' --arguments-json "' + argStr.replace(/"/g, '\\"') + '"';
+  const cmd = 'node "' + COROS_CLI + '" --issuer https://mcpcn.coros.com call-tool --tool ' + tool + ' --arguments-json "' + argStr.replace(/"/g, '\\"') + '"';
   const raw = runWithProxy(cmd);
   if (!raw || raw[0] !== '{') return '';
   try {
